@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RB19 — The Perfect Season</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Oswald:wght@200;300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <!-- loader -->
+  <div id="loader">
+    <div class="loader-inner">
+      <img class="loader-logo" src="/redbull-logo.svg" alt="Red Bull" />
+      <span class="mono">INITIALIZING TELEMETRY</span>
+      <div class="loader-bar"><div id="loader-fill"></div></div>
+      <span class="mono" id="loader-pct">0%</span>
+    </div>
+  </div>
+
+  <!-- fixed 3D canvas -->
+  <canvas id="webgl"></canvas>
+  <div id="bg-grad"></div>
+  <div id="grain"></div>
+
+  <!-- nav -->
+  <nav>
+    <span class="nav-left mono"><img class="nav-logo" src="/redbull-logo.svg" alt="" />RB19&nbsp;/&nbsp;2023</span>
+    <span class="nav-center">ORACLE RED BULL RACING</span>
+    <span class="nav-right mono">CHASSIS&nbsp;№&nbsp;19</span>
+  </nav>
+
+  <main>
+    <!-- HERO -->
+    <section id="hero">
+      <div class="hero-head">
+        <h1>THE PERFECT SEASON</h1>
+        <p class="mono">RB19 · 2023 FORMULA 1 WORLD CHAMPION</p>
+      </div>
+      <div class="hero-sub">
+        <p class="mono kicker">MAX VERSTAPPEN · SERGIO PÉREZ</p>
+        <p class="hero-tag">The most dominant car in Formula 1 history.<br/>Twenty-one wins from twenty-two races.</p>
+      </div>
+      <div class="scroll-cue mono">SCROLL<span class="cue-line"></span></div>
+    </section>
+
+    <!-- FLYTHROUGH PANELS -->
+    <section class="shot" id="shot-frontwing">
+      <div class="panel left"><div class="panel-inner">
+        <span class="mono panel-num">01 / AERO</span>
+        <h2>Front Wing</h2>
+        <p>Downforce begins here. The RB19's front wing sets up the airflow for everything behind it — every element tuned to feed the ground-effect floor that made this car untouchable.</p>
+      </div></div>
+    </section>
+
+    <section class="shot" id="shot-cockpit">
+      <div class="panel right"><div class="panel-inner">
+        <span class="mono panel-num">02 / COCKPIT</span>
+        <h2>The Office</h2>
+        <p>A carbon-fibre survival cell built around Max Verstappen. Halo overhead, hybrid deployment, brake-by-wire — a record nineteen wins negotiated through this wheel.</p>
+      </div></div>
+    </section>
+
+    <section class="shot" id="shot-rearwing">
+      <div class="panel right"><div class="panel-inner">
+        <span class="mono panel-num">03 / DRS</span>
+        <h2>Rear Wing</h2>
+        <p>The RB19 devastated rivals in DRS zones. The flap opens, drag collapses, and no car on the 2023 grid could answer the acceleration that followed.</p>
+      </div></div>
+    </section>
+
+    <section class="shot" id="shot-diffuser">
+      <div class="panel left"><div class="panel-inner">
+        <span class="mono panel-num">04 / FLOOR</span>
+        <h2>Ground Effect</h2>
+        <p>Adrian Newey's signature. Venturi tunnels under the floor pull the RB19 into the tarmac — downforce for free, no wings required. The secret the rest of the grid never solved.</p>
+      </div></div>
+    </section>
+
+    <!-- EXPLODED VIEW -->
+    <section id="exploded">
+      <div class="exploded-head">
+        <span class="mono panel-num">05 / ANATOMY</span>
+        <h2>One machine.<br/>Twenty-one victories.</h2>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section id="stats">
+      <span class="mono panel-num stats-kicker">06 / SEASON 2023</span>
+      <ul class="stat-row">
+        <li><span class="stat-n" data-count="21">0</span><span class="mono stat-l">WINS</span></li>
+        <li><span class="stat-n" data-count="14">0</span><span class="mono stat-l">POLES</span></li>
+        <li><span class="stat-n" data-count="30">0</span><span class="mono stat-l">PODIUMS</span></li>
+        <li><span class="stat-n" data-count="860">0</span><span class="mono stat-l">POINTS</span></li>
+      </ul>
+      <p class="stats-foot">Both World Championships. Verstappen champion with a record nineteen wins — the greatest single season ever driven.</p>
+    </section>
+
+    <!-- CLOSER -->
+    <section id="closer">
+      <h2 class="giant-2">CHAMPION</h2>
+      <p class="mono closer-sub">RB19 · HONDA RBPT HYBRID V6 · ADRIAN NEWEY</p>
+    </section>
+
+    <footer>
+      <span class="mono">UNOFFICIAL FAN TRIBUTE — NOT AFFILIATED WITH RED BULL RACING OR FORMULA 1</span>
+    </footer>
+  </main>
+
+  <!-- hero top-view spec callouts -->
+  <div id="hero-callouts">
+    <div class="hero-callout" data-anchor="halo"><span class="dot"></span><span class="mono">HALO · GRADE-5 TITANIUM</span></div>
+    <div class="hero-callout" data-anchor="rearwing"><span class="dot"></span><span class="mono">DRS REAR WING</span></div>
+    <div class="hero-callout" data-anchor="tyre"><span class="dot"></span><span class="mono">PIRELLI 18″ SLICKS</span></div>
+    <div class="hero-callout" data-anchor="floor"><span class="dot"></span><span class="mono">VENTURI FLOOR · GROUND EFFECT</span></div>
+    <div class="hero-callout" data-anchor="engine"><span class="dot"></span><span class="mono">HONDA RBPT V6 TURBO-HYBRID</span></div>
+  </div>
+
+  <!-- exploded-view callouts -->
+  <div id="callouts">
+    <div class="callout" data-part="frontwing"><span class="dot"></span><span class="mono">FRONT WING</span></div>
+    <div class="callout" data-part="rearwing"><span class="dot"></span><span class="mono">DRS REAR WING</span></div>
+    <div class="callout" data-part="tyre"><span class="dot"></span><span class="mono">PIRELLI P ZERO</span></div>
+    <div class="callout" data-part="wheel"><span class="dot"></span><span class="mono">STEERING WHEEL</span></div>
+    <div class="callout" data-part="diffuser"><span class="dot"></span><span class="mono">DIFFUSER</span></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

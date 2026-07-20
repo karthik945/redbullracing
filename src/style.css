@@ -1,0 +1,291 @@
+:root {
+  --navy-0: #04070f;
+  --navy-1: #0a1128;
+  --navy-2: #121f45;
+  --red: #d50032;
+  --red-bright: #ff1e3c;
+  --yellow: #ffc906;
+  --ink: #e9edf7;
+  --ink-dim: #8b93ad;
+  --hairline: rgba(233, 237, 247, 0.14);
+  --font-display: "Anton", sans-serif;
+  --font-body: "Archivo", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: auto; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--navy-0);
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* ---------- loader ---------- */
+#loader {
+  position: fixed; inset: 0; z-index: 100;
+  background: var(--navy-0);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.6s ease, visibility 0.6s;
+}
+#loader.done { opacity: 0; visibility: hidden; }
+.loader-inner { display: flex; flex-direction: column; gap: 18px; align-items: center; }
+.loader-logo {
+  width: 84px; height: auto;
+  filter: drop-shadow(0 0 18px rgba(213, 0, 50, 0.35));
+  animation: loader-pulse 1.8s ease-in-out infinite;
+}
+@keyframes loader-pulse {
+  0%, 100% { opacity: 0.75; transform: scale(0.97); }
+  50% { opacity: 1; transform: scale(1); }
+}
+.loader-bar { width: 220px; height: 1px; background: var(--hairline); }
+#loader-fill { width: 0%; height: 100%; background: var(--red); transition: width 0.2s; }
+
+/* ---------- canvas & atmosphere ---------- */
+#webgl {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  z-index: 2; pointer-events: none;
+}
+/* vignette over the render */
+#bg-grad {
+  position: fixed; inset: 0; z-index: 3; pointer-events: none;
+  background: radial-gradient(ellipse 75% 65% at 50% 45%, transparent 55%, rgba(2, 4, 10, 0.6) 100%);
+}
+#grain {
+  position: fixed; inset: -50%; z-index: 6; pointer-events: none; opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 8s steps(10) infinite;
+}
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -3%); }
+  60% { transform: translate(-2%, -2%); }
+  80% { transform: translate(3%, 3%); }
+}
+
+/* ---------- nav ---------- */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 34px;
+  mix-blend-mode: screen;
+}
+.nav-left { display: flex; align-items: center; gap: 10px; }
+.nav-logo { width: 22px; height: auto; display: block; }
+.nav-center {
+  font-family: var(--font-display);
+  font-size: 0.95rem; letter-spacing: 0.34em;
+  color: var(--ink);
+}
+
+/* ---------- layout ---------- */
+/* canvas is fixed at z-index 2: the giant hero type sits below it (z1),
+   all readable content sits above it (z5) */
+main { position: relative; }
+section { position: relative; }
+.hero-sub, .scroll-cue, .panel, .exploded-head, #stats, #closer, footer {
+  position: relative; z-index: 5;
+}
+
+/* ---------- hero ---------- */
+#hero {
+  height: 84vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.hero-head {
+  /* headline lives inside the 3D scene (under the water); DOM copy for a11y */
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.hero-head h1 {
+  font-family: var(--font-display);
+  font-size: 10.4vw;
+  line-height: 0.95;
+  white-space: nowrap;
+  letter-spacing: 0.045em;
+  color: rgba(233, 237, 247, 0.94);
+  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.85);
+}
+.hero-head .mono { color: var(--yellow); }
+.hero-sub {
+  position: absolute !important; bottom: 40px; left: 34px;
+  text-align: left;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.kicker { color: var(--yellow); }
+.hero-tag {
+  font-size: 1.05rem; font-weight: 500; line-height: 1.55;
+  color: var(--ink); max-width: 36ch;
+  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.9);
+}
+.scroll-cue {
+  position: absolute !important; bottom: 40px; right: 34px; left: auto;
+  transform: none;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.cue-line {
+  width: 1px; height: 46px;
+  background: linear-gradient(var(--red), transparent);
+  animation: cue 1.8s ease-in-out infinite;
+  transform-origin: top;
+}
+@keyframes cue { 0%,100% { transform: scaleY(0.4); opacity:.4 } 50% { transform: scaleY(1); opacity:1 } }
+
+/* ---------- flythrough shots ---------- */
+/* .shot is just the runway before its .panel locks (see the pin+scrub
+   timeline in main.js) — the pin itself supplies the hard-stop duration */
+.shot {
+  height: 117vh;
+  display: flex; align-items: center;
+}
+.panel {
+  width: min(420px, 82vw);
+  padding: 30px 0;
+  border-top: 1px solid var(--hairline);
+}
+.panel.left  { margin-left: 8vw; }
+.panel.right { margin-left: auto; margin-right: 8vw; }
+/* drag offset lives on this inner wrapper — a CHILD of the pinned/scrubbed
+   .panel, never an ancestor. An ancestor with a non-none transform/translate
+   becomes the containing block for any position:fixed descendant, which
+   would hijack GSAP's pin (that's what made the text vanish off-screen). */
+.panel-inner {
+  display: flex; flex-direction: column; gap: 14px;
+}
+.panel-num { color: var(--red-bright); }
+.panel h2, .exploded-head h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  line-height: 1;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.panel p {
+  font-size: 0.98rem; line-height: 1.65; color: var(--ink-dim);
+}
+
+/* ---------- exploded ---------- */
+/* the diffuser->exploded transition crosses from a pinned shot into a
+   plain section, so it doesn't get the same cancellation the other
+   same-type transitions get — this margin is a pure, isolated correction
+   for that one gap; it doesn't touch any other section's own proportions */
+#exploded { height: 117vh; margin-top: 24vh; }
+.exploded-head {
+  position: sticky; top: 0;
+  height: 100vh;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 0 8vw 10vh;
+  gap: 14px;
+  pointer-events: none;
+}
+
+#callouts { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
+
+#hero-callouts { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
+.hero-callout {
+  position: absolute; top: 0; left: 0;
+  display: flex; align-items: center; gap: 10px;
+  opacity: 0;
+  white-space: nowrap;
+}
+.hero-callout .mono { color: var(--ink); font-size: 0.62rem; padding-left: 44px; }
+.hero-callout .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 10px rgba(233, 237, 247, 0.9);
+  position: relative;
+}
+.hero-callout .dot::after {
+  content: ""; position: absolute; left: 9px; top: 2.5px;
+  width: 38px; height: 1px; background: var(--hairline);
+}
+.hero-callout.flip { flex-direction: row-reverse; }
+.hero-callout.flip .mono { padding-left: 0; padding-right: 44px; }
+.hero-callout.flip .dot::after { left: auto; right: 9px; }
+.callout {
+  position: absolute; top: 0; left: 0;
+  display: flex; align-items: center; gap: 10px;
+  opacity: 0;
+  transition: opacity 0.4s;
+  white-space: nowrap;
+}
+.callout .mono { color: var(--ink); font-size: 0.66rem; }
+.callout .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--red-bright);
+  box-shadow: 0 0 12px var(--red-bright);
+  position: relative;
+}
+.callout .dot::after {
+  content: ""; position: absolute; left: 10px; top: 3px;
+  width: 34px; height: 1px; background: var(--hairline);
+}
+.callout .mono { padding-left: 40px; }
+
+/* ---------- stats ---------- */
+#stats {
+  height: 117vh;
+  display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+  gap: 20px; padding: 5vh 8vw 0;
+}
+.stats-kicker { color: var(--red-bright); }
+.stat-row {
+  list-style: none;
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: clamp(24px, 5vw, 64px);
+}
+.stat-row li { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.stat-n {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 5.5vw, 4.6rem);
+  line-height: 1;
+  color: var(--ink);
+}
+.stat-row li:first-child .stat-n { color: var(--red); }
+.stat-l { color: var(--ink-dim); }
+.stats-foot { color: var(--ink-dim); font-size: 0.95rem; text-align: center; max-width: 52ch; line-height: 1.6; }
+
+/* ---------- closer ---------- */
+#closer {
+  height: 117vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+}
+.giant-2 {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 13vw, 12rem);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(233, 237, 247, 0.35);
+}
+.closer-sub { color: var(--ink-dim); }
+
+footer {
+  padding: 40px; text-align: center;
+  border-top: 1px solid var(--hairline);
+}
+footer .mono { font-size: 0.6rem; }
+
+@media (max-width: 640px) {
+  nav { padding: 16px 18px; }
+  .nav-left, .nav-right { display: none; }
+  .panel.left { margin-left: 9vw; }
+  .panel.right { margin-right: 9vw; }
+}
