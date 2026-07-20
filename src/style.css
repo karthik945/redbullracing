@@ -182,7 +182,7 @@ section { position: relative; }
   color: var(--ink);
 }
 .panel p {
-  font-size: 0.98rem; line-height: 1.65; color: var(--ink-dim);
+  font-size: 1rem; line-height: 1.65; color: var(--ink-dim);
 }
 
 /* ---------- exploded ---------- */
@@ -291,15 +291,45 @@ footer {
 footer .mono { font-size: 0.6rem; }
 
 @media (max-width: 640px) {
-  nav { padding: 16px 18px; }
+  /* space-between with only one child left (the others go display:none
+     below, removed from flex layout entirely) collapses it to flex-start —
+     justify-content:center here is what keeps it visually centered */
+  nav { padding: 16px 18px; justify-content: center; }
   .nav-left, .nav-right { display: none; }
   .nav-center { font-size: 0.7rem; letter-spacing: 0.22em; }
+
+  /* the projected spec-callout labels (.hero-callout / .callout) are
+     nowrap text positioned from raw 3D->screen pixel math with no
+     viewport-edge awareness — on a narrow phone, 5-6 of them fighting
+     for space around a portrait-framed car will clip or stack on top of
+     each other. They're supplementary flourish, not the core story text
+     (that lives in the panels/stats/closer), so they're hidden below the
+     width where they can't lay out cleanly rather than shipped broken. */
+  #hero-callouts, #callouts { display: none; }
+
   .panel.left { margin-left: 9vw; }
   .panel.right { margin-right: 9vw; }
   .panel { width: min(420px, 88vw); }
-  .hero-tag { font-size: 0.92rem; max-width: 28ch; }
+  .panel h2, .exploded-head h2 { font-size: clamp(2rem, 8vw, 4rem); }
+
+  .hero-tag { font-size: 1rem; line-height: 1.5; max-width: 26ch; }
   .hero-sub, .scroll-cue { bottom: max(28px, env(safe-area-inset-bottom, 0px)); }
+
   .stat-row { gap: clamp(18px, 8vw, 40px); }
-  .stats-foot { max-width: 32ch; }
+  .stats-foot { max-width: 32ch; font-size: 0.9rem; }
+
+  footer { padding: 28px 24px; }
+  footer .mono { letter-spacing: 0.1em; line-height: 1.6; }
+
   #tuner-btn { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+}
+
+@media (max-width: 400px) {
+  /* small phones (SE-class widths) need one more notch down: the 640px
+     tier's floors were still sized with a bit of desktop-adjacent margin */
+  .hero-tag { font-size: 0.92rem; max-width: 24ch; }
+  .panel h2, .exploded-head h2 { font-size: clamp(1.75rem, 9vw, 4rem); }
+  .panel.left { margin-left: 6vw; }
+  .panel.right { margin-right: 6vw; }
+  .stat-n { font-size: clamp(2rem, 9vw, 4.6rem); }
 }
