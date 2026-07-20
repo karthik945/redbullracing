@@ -103,6 +103,9 @@ section { position: relative; }
 /* ---------- hero ---------- */
 #hero {
   height: 84vh;
+  height: 84dvh; /* dvh accounts for mobile browser address-bar chrome;
+                    ignored by browsers that don't support it, keeping
+                    the vh fallback above */
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
 }
@@ -152,6 +155,7 @@ section { position: relative; }
    timeline in main.js) — the pin itself supplies the hard-stop duration */
 .shot {
   height: 117vh;
+  height: 117dvh;
   display: flex; align-items: center;
 }
 .panel {
@@ -186,10 +190,11 @@ section { position: relative; }
    plain section, so it doesn't get the same cancellation the other
    same-type transitions get — this margin is a pure, isolated correction
    for that one gap; it doesn't touch any other section's own proportions */
-#exploded { height: 117vh; margin-top: 24vh; }
+#exploded { height: 117vh; height: 117dvh; margin-top: 24vh; margin-top: 24dvh; }
 .exploded-head {
   position: sticky; top: 0;
   height: 100vh;
+  height: 100dvh;
   display: flex; flex-direction: column; justify-content: flex-end;
   padding: 0 8vw 10vh;
   gap: 14px;
@@ -242,6 +247,7 @@ section { position: relative; }
 /* ---------- stats ---------- */
 #stats {
   height: 117vh;
+  height: 117dvh;
   display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
   gap: 20px; padding: 5vh 8vw 0;
 }
@@ -265,6 +271,7 @@ section { position: relative; }
 /* ---------- closer ---------- */
 #closer {
   height: 117vh;
+  height: 117dvh;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
 }
 .giant-2 {
@@ -286,6 +293,13 @@ footer .mono { font-size: 0.6rem; }
 @media (max-width: 640px) {
   nav { padding: 16px 18px; }
   .nav-left, .nav-right { display: none; }
+  .nav-center { font-size: 0.7rem; letter-spacing: 0.22em; }
   .panel.left { margin-left: 9vw; }
   .panel.right { margin-right: 9vw; }
+  .panel { width: min(420px, 88vw); }
+  .hero-tag { font-size: 0.92rem; max-width: 28ch; }
+  .hero-sub, .scroll-cue { bottom: max(28px, env(safe-area-inset-bottom, 0px)); }
+  .stat-row { gap: clamp(18px, 8vw, 40px); }
+  .stats-foot { max-width: 32ch; }
+  #tuner-btn { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
 }

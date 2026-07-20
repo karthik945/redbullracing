@@ -29,9 +29,13 @@ gsap.ticker.lagSmoothing(0);
    Neon dark room: white RB19 sign as the hero light, real water floor,
    amber + white keys. Camera = one continuous single-take flight. */
 
+// coarse-pointer / narrow-viewport devices get lighter render settings —
+// phone GPUs can't carry the same shadow/MSAA/pixel-ratio budget as desktop
+const isMobile = matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
+
 const canvas = document.querySelector("#webgl");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
@@ -75,7 +79,27 @@ scene.background = new THREE.Color(0x020306);
   coolCard.geometry.dispose(); coolCard.material.dispose();
 }
 
-const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 200);
+// every camera "beat" below is hand-tuned pos/look coordinates for a
+// widescreen (~16:9) frame. A fixed vertical FOV crops the car badly on a
+// narrow portrait phone, since horizontal FOV shrinks with aspect ratio.
+// This instead holds the HORIZONTAL field of view constant at the design
+// aspect, widening the vertical FOV as the viewport narrows so the car
+// stays framed the same way regardless of device shape.
+const BASE_FOV = 38;
+const BASE_ASPECT = 16 / 9;
+const BASE_FOV_RAD = THREE.MathUtils.degToRad(BASE_FOV);
+const BASE_HFOV_RAD = 2 * Math.atan(Math.tan(BASE_FOV_RAD / 2) * BASE_ASPECT);
+function fovForAspect(aspect) {
+  const clamped = Math.max(aspect, 0.45); // avoid absurd blow-up on extreme portrait
+  return THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(BASE_HFOV_RAD / 2) / clamped));
+}
+
+const camera = new THREE.PerspectiveCamera(
+  fovForAspect(window.innerWidth / window.innerHeight),
+  window.innerWidth / window.innerHeight,
+  0.1,
+  200
+);
 
 /* ================= water floor ================= */
 
@@ -83,8 +107,8 @@ const waterNormals = new THREE.TextureLoader().load("/waternormals.jpg", (t) => 
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
 });
 const water = new Water(new THREE.PlaneGeometry(160, 160), {
-  textureWidth: 1024,
-  textureHeight: 1024,
+  textureWidth: isMobile ? 512 : 1024,
+  textureHeight: isMobile ? 512 : 1024,
   waterNormals,
   sunDirection: new THREE.Vector3(0, 1, 0),
   sunColor: 0x000000,
@@ -251,7 +275,7 @@ const whiteKey = new THREE.SpotLight(0xffffff, 300, 0, Math.PI / 6, 0.5, 2);
 whiteKey.position.set(-1.2, 7.2, 2.2);
 whiteKey.target.position.set(0, 0.6, 0.3);
 whiteKey.castShadow = true;
-whiteKey.shadow.mapSize.set(1024, 1024);
+whiteKey.shadow.mapSize.set(isMobile ? 512 : 1024, isMobile ? 512 : 1024);
 whiteKey.shadow.bias = -0.0002;
 scene.add(whiteKey, whiteKey.target);
 
@@ -337,7 +361,7 @@ scene.add(lampGlow);
 const roamLight = new THREE.SpotLight(0xffffff, 0, 0, Math.PI / 5.5, 0.98, 2);
 roamLight.position.set(0, 8.5, 0);
 roamLight.castShadow = true;
-roamLight.shadow.mapSize.set(1024, 1024);
+roamLight.shadow.mapSize.set(isMobile ? 512 : 1024, isMobile ? 512 : 1024);
 roamLight.shadow.bias = -0.0002;
 scene.add(roamLight, roamLight.target);
 
@@ -541,8 +565,9 @@ loader.load(
 const composer = new EffectComposer(
   renderer,
   new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
-    samples: 2, // 4x MSAA + bloom + the unsharp-mask pass below was paying
-                // for anti-aliasing twice over; 2x still reads clean here
+    samples: isMobile ? 0 : 2, // 4x MSAA + bloom + the unsharp-mask pass below
+                // was paying for anti-aliasing twice over; 2x still reads
+                // clean on desktop, and mobile GPUs can't afford MSAA at all
     type: THREE.HalfFloatType,
   })
 );
@@ -919,6 +944,7 @@ renderer.setAnimationLoop(() => {
 
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
+  camera.fov = fovForAspect(camera.aspect); // re-fit on rotation/resize
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   composer.setSize(window.innerWidth, window.innerHeight);
