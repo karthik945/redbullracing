@@ -3,20 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RB19 — The Perfect Season</title>
+  <title>RB19 — Built to Win</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Oswald:wght@200;300&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
-  <!-- loader -->
+  <!-- loader: the logo itself is the progress indicator — a dim base copy
+       with a bright copy revealed left-to-right via clip-path as the GLB loads -->
   <div id="loader">
-    <div class="loader-inner">
-      <img class="loader-logo" src="/redbull-logo.svg" alt="Red Bull" />
-      <span class="mono">INITIALIZING TELEMETRY</span>
-      <div class="loader-bar"><div id="loader-fill"></div></div>
-      <span class="mono" id="loader-pct">0%</span>
+    <div class="loader-logo-wrap">
+      <img class="loader-logo loader-logo-dim" src="/redbull-logo.svg" alt="" aria-hidden="true" />
+      <img class="loader-logo loader-logo-bright" id="loader-logo-bright" src="/redbull-logo.svg" alt="Red Bull Racing" />
     </div>
   </div>
 
@@ -25,18 +24,44 @@
   <div id="bg-grad"></div>
   <div id="grain"></div>
 
+  <!-- scroll scrubber: fixed, always on top, independent of nav scroll -->
+  <div id="scrubber">
+    <div class="scrubber-track" id="scrubber-track"></div>
+    <span class="scrubber-label mono" id="scrubber-label">G1</span>
+  </div>
+
   <!-- nav -->
   <nav>
-    <span class="nav-left mono"><img class="nav-logo" src="/redbull-logo.svg" alt="" />RB19&nbsp;/&nbsp;2023</span>
-    <span class="nav-center">ORACLE RED BULL RACING</span>
-    <span class="nav-right mono">CHASSIS&nbsp;№&nbsp;19</span>
+    <a class="nav-link mono" href="#hero" id="nav-home">HOME</a>
+    <div class="nav-item" id="nav-merch-wrap">
+      <button class="nav-link mono" id="nav-merch" aria-haspopup="true" aria-expanded="false">MERCHANDISE</button>
+      <div class="nav-dropdown mono" id="nav-dropdown">
+        <a href="#shot-frontwing">Team Jackets</a>
+        <a href="#shot-cockpit">Race-Day Tees</a>
+        <a href="#shot-rearwing">Race-Day Prints</a>
+        <a href="#shot-diffuser">Scale Collectibles</a>
+        <a href="#exploded">Trackside Accessories</a>
+        <a href="#stats">Limited Edition</a>
+        <a href="#closer">The Champion's Bundle</a>
+      </div>
+    </div>
+    <a class="nav-link mono" href="#" id="nav-cart">CART <span id="cart-count">0</span></a>
   </nav>
+
+  <!-- background music -->
+  <audio id="bgm" src="/apex-turn.mp3" loop preload="auto"></audio>
+  <button id="music-toggle" title="Toggle music" aria-pressed="false">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="M4 9v6h4l5 4V5L8 9H4z" stroke-linejoin="round" />
+      <path id="music-waves" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11" stroke-linecap="round" />
+    </svg>
+  </button>
 
   <main>
     <!-- HERO -->
     <section id="hero">
       <div class="hero-head">
-        <h1>THE PERFECT SEASON</h1>
+        <h1>BUILT TO WIN</h1>
         <p class="mono">RB19 · 2023 FORMULA 1 WORLD CHAMPION</p>
       </div>
       <div class="hero-sub">
@@ -52,6 +77,15 @@
         <span class="mono panel-num">01 / AERO</span>
         <h2>Front Wing</h2>
         <p>Downforce begins here. The RB19's front wing sets up the airflow for everything behind it — every element tuned to feed the ground-effect floor that made this car untouchable.</p>
+        <h3 class="merch-heading">Team Jackets</h3>
+        <p class="merch-tagline">Outerwear cut for the pit wall, styled like the car that inspired it.</p>
+        <div class="merch-grid">
+          <img src="/merch/frontwing-1.jpg" alt="" loading="lazy" />
+          <img src="/merch/frontwing-2.jpg" alt="" loading="lazy" />
+          <img src="/merch/frontwing-3.jpg" alt="" loading="lazy" />
+          <img src="/merch/frontwing-4.jpg" alt="" loading="lazy" />
+        </div>
+        <button class="merch-cta">VIEW COLLECTION</button>
       </div></div>
     </section>
 
@@ -60,6 +94,15 @@
         <span class="mono panel-num">02 / COCKPIT</span>
         <h2>The Office</h2>
         <p>A carbon-fibre survival cell built around Max Verstappen. Halo overhead, hybrid deployment, brake-by-wire — a record nineteen wins negotiated through this wheel.</p>
+        <h3 class="merch-heading">Race-Day Tees</h3>
+        <p class="merch-tagline">What the driver actually wears — team crew, race number, and stripe, straight off the grid.</p>
+        <div class="merch-grid">
+          <img src="/merch/cockpit-1.jpg" alt="" loading="lazy" />
+          <img src="/merch/cockpit-2.jpg" alt="" loading="lazy" />
+          <img src="/merch/cockpit-3.jpg" alt="" loading="lazy" />
+          <img src="/merch/cockpit-4.jpg" alt="" loading="lazy" />
+        </div>
+        <button class="merch-cta">VIEW COLLECTION</button>
       </div></div>
     </section>
 
@@ -68,6 +111,15 @@
         <span class="mono panel-num">03 / DRS</span>
         <h2>Rear Wing</h2>
         <p>The RB19 devastated rivals in DRS zones. The flap opens, drag collapses, and no car on the 2023 grid could answer the acceleration that followed.</p>
+        <h3 class="merch-heading">Race-Day Prints</h3>
+        <p class="merch-tagline">Frame the moment DRS opens and the gap disappears.</p>
+        <div class="merch-grid">
+          <img src="/merch/rearwing-1.jpg" alt="" loading="lazy" />
+          <img src="/merch/rearwing-2.jpg" alt="" loading="lazy" />
+          <img src="/merch/rearwing-3.jpg" alt="" loading="lazy" />
+          <img src="/merch/rearwing-4.jpg" alt="" loading="lazy" />
+        </div>
+        <button class="merch-cta">VIEW COLLECTION</button>
       </div></div>
     </section>
 
@@ -76,6 +128,15 @@
         <span class="mono panel-num">04 / FLOOR</span>
         <h2>Ground Effect</h2>
         <p>Adrian Newey's signature. Venturi tunnels under the floor pull the RB19 into the tarmac — downforce for free, no wings required. The secret the rest of the grid never solved.</p>
+        <h3 class="merch-heading">Scale Collectibles</h3>
+        <p class="merch-tagline">Every detail Newey hid underneath, replicated down to the millimetre.</p>
+        <div class="merch-grid">
+          <img src="/merch/diffuser-1.jpg" alt="" loading="lazy" />
+          <img src="/merch/diffuser-2.jpg" alt="" loading="lazy" />
+          <img src="/merch/diffuser-3.jpg" alt="" loading="lazy" />
+          <img src="/merch/diffuser-4.jpg" alt="" loading="lazy" />
+        </div>
+        <button class="merch-cta">VIEW COLLECTION</button>
       </div></div>
     </section>
 
@@ -84,6 +145,15 @@
       <div class="exploded-head">
         <span class="mono panel-num">05 / ANATOMY</span>
         <h2>One machine.<br/>Twenty-one victories.</h2>
+        <h3 class="merch-heading">Trackside Accessories</h3>
+        <p class="merch-tagline">Every small piece has a job. So does everything here.</p>
+        <div class="merch-grid">
+          <img src="/merch/anatomy-1.jpg" alt="" loading="lazy" />
+          <img src="/merch/anatomy-2.jpg" alt="" loading="lazy" />
+          <img src="/merch/anatomy-3.jpg" alt="" loading="lazy" />
+          <img src="/merch/anatomy-4.jpg" alt="" loading="lazy" />
+        </div>
+        <button class="merch-cta">VIEW COLLECTION</button>
       </div>
     </section>
 
@@ -97,16 +167,38 @@
         <li><span class="stat-n" data-count="860">0</span><span class="mono stat-l">POINTS</span></li>
       </ul>
       <p class="stats-foot">Both World Championships. Verstappen champion with a record nineteen wins — the greatest single season ever driven.</p>
+      <h3 class="merch-heading">Limited Edition</h3>
+      <p class="merch-tagline">Numbered pieces for a record-breaking season — only 500 of each ever made.</p>
+      <div class="merch-grid">
+        <img src="/merch/stats-1.jpg" alt="" loading="lazy" />
+        <img src="/merch/stats-2.jpg" alt="" loading="lazy" />
+        <img src="/merch/stats-3.jpg" alt="" loading="lazy" />
+        <img src="/merch/stats-4.jpg" alt="" loading="lazy" />
+      </div>
+      <button class="merch-cta">VIEW COLLECTION</button>
     </section>
 
     <!-- CLOSER -->
     <section id="closer">
       <h2 class="giant-2">CHAMPION</h2>
       <p class="mono closer-sub">RB19 · HONDA RBPT HYBRID V6 · ADRIAN NEWEY</p>
+      <h3 class="merch-heading">The Champion's Bundle</h3>
+      <p class="merch-tagline">Everything the season earned, boxed for the ones who watched it happen.</p>
+      <div class="merch-grid">
+        <img src="/merch/closer-1.jpg" alt="" loading="lazy" />
+        <img src="/merch/closer-2.jpg" alt="" loading="lazy" />
+        <img src="/merch/closer-3.jpg" alt="" loading="lazy" />
+        <img src="/merch/closer-4.jpg" alt="" loading="lazy" />
+      </div>
+      <button class="merch-cta">VIEW COLLECTION</button>
     </section>
 
     <footer>
-      <span class="mono">UNOFFICIAL FAN TRIBUTE — NOT AFFILIATED WITH RED BULL RACING OR FORMULA 1</span>
+      <div class="footer-links mono">
+        <a href="#shot-frontwing" class="footer-merch-link">MERCHANDISE</a>
+        <a href="#" id="footer-cart">CART</a>
+      </div>
+      <span class="mono footer-disclaimer">UNOFFICIAL FAN TRIBUTE — NOT AFFILIATED WITH RED BULL RACING OR FORMULA 1</span>
     </footer>
   </main>
 

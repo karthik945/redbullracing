@@ -205,7 +205,7 @@ let waterTextMat = null;
     ctx.fillStyle = "#ffffff";
     try { ctx.letterSpacing = "24px"; } catch (e) {}
     ctx.font = '400 520px "Anton", sans-serif';
-    ctx.fillText("THE PERFECT SEASON", c.width / 2, c.height / 2 + 22);
+    ctx.fillText("BUILT TO WIN", c.width / 2, c.height / 2 + 22);
   };
   draw();
   document.fonts.load('400 520px "Anton"').then(() => { draw(); tex.needsUpdate = true; }).catch(() => {});
@@ -213,13 +213,14 @@ let waterTextMat = null;
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
 
+  // static, bright white, no ripple/refraction — the text sits still under
+  // the water with no distortion or motion, only its overall opacity fades
+  // with heroFade like the rest of the hero-only dressing
   waterTextMat = new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
     uniforms: {
       uMap: { value: tex },
-      uNormals: { value: waterNormals },
-      uTime: { value: 0 },
       uOpacity: { value: 1 },
     },
     vertexShader: `
@@ -230,25 +231,11 @@ let waterTextMat = null;
       }`,
     fragmentShader: `
       uniform sampler2D uMap;
-      uniform sampler2D uNormals;
-      uniform float uTime;
       uniform float uOpacity;
       varying vec2 vUv;
       void main() {
-        // smooth liquid refraction: one low-frequency normal read + a slow sine swell
-        vec2 n = texture2D(uNormals, vUv * vec2(1.4, 0.9) + vec2(uTime * 0.012, uTime * 0.008)).rg - 0.5;
-        vec2 swell = vec2(
-          sin(vUv.x * 9.0 + uTime * 0.5) * 0.0016,
-          cos(vUv.x * 6.0 - uTime * 0.4) * 0.0022
-        );
-        vec2 wobble = n * 0.006 + swell;
-        vec4 c = texture2D(uMap, vUv + wobble);
-        // light physics: the pool of light sits mid-frame — the submerged
-        // letters are brightest there and dim toward the edges
-        float d = distance(vUv, vec2(0.5, 0.5)) * 2.0;
-        float lit = mix(1.5, 0.3, smoothstep(0.15, 1.05, d));
-        c.rgb *= vec3(0.88, 0.92, 1.0) * lit;
-        gl_FragColor = vec4(c.rgb, c.a * uOpacity);
+        vec4 c = texture2D(uMap, vUv);
+        gl_FragColor = vec4(vec3(1.0), c.a * uOpacity);
       }`,
   });
   const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(19.5, 2.41), waterTextMat);
@@ -479,8 +466,7 @@ const loader = new GLTFLoader();
 loader.setDRACOLoader(draco);
 
 const loaderEl = document.getElementById("loader");
-const loaderFill = document.getElementById("loader-fill");
-const loaderPct = document.getElementById("loader-pct");
+const loaderBright = document.getElementById("loader-logo-bright");
 const LOADER_MIN_MS = 2500;
 const loadStartTime = performance.now();
 function dismissLoader(onDone) {
@@ -550,13 +536,17 @@ loader.load(
   (xhr) => {
     if (xhr.total) {
       const p = Math.round((xhr.loaded / xhr.total) * 100);
-      loaderFill.style.width = p + "%";
-      loaderPct.textContent = p + "%";
+      loaderBright.style.clipPath = `inset(0 ${100 - p}% 0 0)`;
     }
   },
   (err) => {
     console.error("GLB load failed", err);
-    loaderPct.textContent = "LOAD FAILED — REFRESH";
+    // logo-only loader has no text in the golden path — only inject a
+    // message for this edge case, so failure is still legible
+    const msg = document.createElement("span");
+    msg.className = "mono loader-error";
+    msg.textContent = "LOAD FAILED — REFRESH";
+    loaderEl.appendChild(msg);
   }
 );
 
@@ -630,6 +620,36 @@ const panelPins = {}; // "#shot-frontwing" -> its pin ScrollTrigger, filled in b
 // where layout is already being re-measured, instead of every render frame
 let cachedDocH = 0;
 
+/* ================= scroll scrubber (ticks) =================
+   ticks are laid out at the beats' REAL scroll fractions (not evenly
+   spaced), so they line up exactly with where the camera actually stops */
+const scrubberTrack = document.getElementById("scrubber-track");
+const SCRUBBER_MINOR_TICKS_PER_GAP = 3;
+let scrubberPlayhead = null;
+function buildScrubberTicks() {
+  scrubberTrack.innerHTML = "";
+  const n = beatProgress.length;
+  for (let i = 0; i < n; i++) {
+    const major = document.createElement("div");
+    major.className = "scrubber-tick major";
+    major.style.left = beatProgress[i] * 100 + "%";
+    scrubberTrack.appendChild(major);
+    if (i < n - 1) {
+      const a = beatProgress[i], b = beatProgress[i + 1];
+      for (let k = 1; k <= SCRUBBER_MINOR_TICKS_PER_GAP; k++) {
+        const frac = a + ((b - a) * k) / (SCRUBBER_MINOR_TICKS_PER_GAP + 1);
+        const minor = document.createElement("div");
+        minor.className = "scrubber-tick";
+        minor.style.left = frac * 100 + "%";
+        scrubberTrack.appendChild(minor);
+      }
+    }
+  }
+  scrubberPlayhead = document.createElement("div");
+  scrubberPlayhead.className = "scrubber-playhead";
+  scrubberTrack.appendChild(scrubberPlayhead);
+}
+
 function buildFlight() {
   const docH = cachedDocH = document.documentElement.scrollHeight - window.innerHeight;
   beatProgress = beats.map((b, i) => {
@@ -656,6 +676,7 @@ function buildFlight() {
   // outro hold instead of stretching the last beat's gap to cover it
   posCurve = new THREE.CatmullRomCurve3(beats.map((b) => new THREE.Vector3(...b.pos)), false, "centripetal", 0.5);
   lookCurve = new THREE.CatmullRomCurve3(beats.map((b) => new THREE.Vector3(...b.look)), false, "centripetal", 0.5);
+  buildScrubberTicks();
 }
 buildFlight();
 // every ScrollTrigger layout pass (resize, pin creation, font load, etc.)
@@ -752,9 +773,8 @@ function updateCamera(t, dt) {
   lightPool.material.opacity = heroFade * waterTune.pool;
   lightPool.visible = heroFade > 0.01;
 
-  // underwater headline rides the ripples, fades with the hero
+  // underwater headline: static, only its opacity follows the hero fade
   if (waterTextMat) {
-    waterTextMat.uniforms.uTime.value = t;
     waterTextMat.uniforms.uOpacity.value = heroFade;
   }
 
@@ -939,6 +959,7 @@ renderer.setAnimationLoop(() => {
   updateExplode(p);
   updateCallouts();
   updateHeroCallouts();
+  updateScrubber(p);
   composer.render();
 });
 
@@ -950,6 +971,115 @@ window.addEventListener("resize", () => {
   composer.setSize(window.innerWidth, window.innerHeight);
   gradePass.uniforms.uTexel.value.set(1 / window.innerWidth, 1 / window.innerHeight);
 });
+
+/* ================= scroll scrubber (playhead + drag) ================= */
+const scrubberEl = document.getElementById("scrubber");
+const scrubberLabel = document.getElementById("scrubber-label");
+
+function updateScrubber(p) {
+  if (scrubberPlayhead) scrubberPlayhead.style.left = p * 100 + "%";
+  let nearest = 0;
+  for (let i = 1; i < beatProgress.length; i++) {
+    if (Math.abs(beatProgress[i] - p) < Math.abs(beatProgress[nearest] - p)) nearest = i;
+  }
+  scrubberLabel.textContent = "G" + (nearest + 1);
+}
+
+{
+  let dragging = false;
+  const fractionFromEvent = (e) => {
+    const rect = scrubberTrack.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    return Math.min(Math.max(x / rect.width, 0), 1);
+  };
+  const onMove = (e) => {
+    if (!dragging) return;
+    e.preventDefault();
+    lenis.scrollTo(fractionFromEvent(e) * cachedDocH, { immediate: true });
+  };
+  const onUp = () => {
+    if (!dragging) return;
+    dragging = false;
+    scrubberEl.classList.remove("dragging");
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onUp);
+    // release always snaps to the nearest beat, not just within a threshold
+    const p = Math.min(Math.max(window.scrollY / cachedDocH, 0), 1);
+    let nearest = 0;
+    for (let i = 1; i < beatProgress.length; i++) {
+      if (Math.abs(beatProgress[i] - p) < Math.abs(beatProgress[nearest] - p)) nearest = i;
+    }
+    lenis.scrollTo(beatProgress[nearest] * cachedDocH, { duration: 0.9 });
+  };
+  scrubberEl.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    scrubberEl.classList.add("dragging");
+    onMove(e);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  });
+}
+
+/* ================= nav / footer links ================= */
+document.getElementById("nav-home")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  lenis.scrollTo(0, { duration: 1.2 });
+});
+{
+  const merchBtn = document.getElementById("nav-merch");
+  const dropdown = document.getElementById("nav-dropdown");
+  if (merchBtn && dropdown) {
+    const closeDropdown = () => {
+      dropdown.classList.remove("open");
+      merchBtn.setAttribute("aria-expanded", "false");
+    };
+    merchBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const open = dropdown.classList.toggle("open");
+      merchBtn.setAttribute("aria-expanded", String(open));
+    });
+    dropdown.querySelectorAll("a").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        closeDropdown();
+        const target = document.querySelector(a.getAttribute("href"));
+        if (target) lenis.scrollTo(target, { duration: 1.2 });
+      });
+    });
+    window.addEventListener("click", (e) => {
+      if (!e.target.closest("#nav-merch-wrap")) closeDropdown();
+    });
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeDropdown();
+    });
+  }
+}
+document.querySelectorAll(".footer-merch-link").forEach((a) => {
+  a.addEventListener("click", (e) => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute("href"));
+    if (target) lenis.scrollTo(target, { duration: 1.2 });
+  });
+});
+// cart is a stub — real checkout is a later phase, inert for now
+document.getElementById("nav-cart")?.addEventListener("click", (e) => e.preventDefault());
+document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preventDefault());
+
+/* ================= music ================= */
+{
+  const audio = document.getElementById("bgm");
+  const btn = document.getElementById("music-toggle");
+  audio.volume = 0.55;
+  btn.addEventListener("click", () => {
+    if (audio.paused) {
+      audio.play().catch(() => {});
+      btn.setAttribute("aria-pressed", "true");
+    } else {
+      audio.pause();
+      btn.setAttribute("aria-pressed", "false");
+    }
+  });
+}
 
 /* ================= TUNER =================
    Press T (or click the ⚙ button) to open.

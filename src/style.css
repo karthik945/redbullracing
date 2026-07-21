@@ -33,25 +33,25 @@ body {
 }
 
 /* ---------- loader ---------- */
+/* the logo IS the progress bar: a dim/desaturated base copy sits behind a
+   full-color copy that reveals left-to-right via clip-path as the GLB loads */
 #loader {
   position: fixed; inset: 0; z-index: 100;
   background: var(--navy-0);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px;
   transition: opacity 0.6s ease, visibility 0.6s;
 }
 #loader.done { opacity: 0; visibility: hidden; }
-.loader-inner { display: flex; flex-direction: column; gap: 18px; align-items: center; }
-.loader-logo {
-  width: 84px; height: auto;
-  filter: drop-shadow(0 0 18px rgba(213, 0, 50, 0.35));
-  animation: loader-pulse 1.8s ease-in-out infinite;
+.loader-logo-wrap { position: relative; width: min(220px, 50vw); }
+.loader-logo { display: block; width: 100%; height: auto; }
+.loader-logo-dim { opacity: 0.16; filter: grayscale(1); }
+.loader-logo-bright {
+  position: absolute; inset: 0;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.25s linear;
+  filter: drop-shadow(0 0 18px rgba(213, 0, 50, 0.45));
 }
-@keyframes loader-pulse {
-  0%, 100% { opacity: 0.75; transform: scale(0.97); }
-  50% { opacity: 1; transform: scale(1); }
-}
-.loader-bar { width: 220px; height: 1px; background: var(--hairline); }
-#loader-fill { width: 0%; height: 100%; background: var(--red); transition: width 0.2s; }
 
 /* ---------- canvas & atmosphere ---------- */
 #webgl {
@@ -77,19 +77,110 @@ body {
 }
 
 /* ---------- nav ---------- */
+/* normal document flow (not fixed) — sits over the hero as a minimal top
+   bar, then scrolls away with the rest of the page like any other content */
 nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 10;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 22px 34px;
-  mix-blend-mode: screen;
+  position: relative; z-index: 5;
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(28px, 6vw, 64px);
+  padding: 26px 34px;
 }
-.nav-left { display: flex; align-items: center; gap: 10px; }
-.nav-logo { width: 22px; height: auto; display: block; }
-.nav-center {
-  font-family: var(--font-display);
-  font-size: 0.95rem; letter-spacing: 0.34em;
-  color: var(--ink);
+.nav-link {
+  font-size: 0.68rem; letter-spacing: 0.2em;
+  color: var(--ink-dim);
+  text-decoration: none;
+  transition: color 0.25s;
 }
+.nav-link:hover { color: var(--ink); }
+#nav-cart { display: flex; align-items: center; gap: 6px; }
+#cart-count {
+  font-size: 0.6rem; color: var(--navy-0);
+  background: var(--ink-dim);
+  border-radius: 50%;
+  width: 15px; height: 15px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.nav-item { position: relative; }
+#nav-merch {
+  background: none; border: none; padding: 0; font: inherit;
+  cursor: pointer;
+}
+.nav-dropdown {
+  position: absolute; top: 100%; left: 50%;
+  transform: translateX(-50%);
+  margin-top: 14px;
+  background: rgba(4, 7, 15, 0.94);
+  border: 1px solid rgba(233, 237, 247, 0.18);
+  border-radius: 6px;
+  padding: 8px 0;
+  min-width: 210px;
+  display: flex; flex-direction: column;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 20;
+}
+.nav-dropdown.open { opacity: 1; visibility: visible; pointer-events: auto; }
+.nav-dropdown a {
+  padding: 10px 18px;
+  font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-dim);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s, background 0.2s;
+}
+.nav-dropdown a:hover { color: var(--ink); background: rgba(233, 237, 247, 0.06); }
+
+/* ---------- scroll scrubber ---------- */
+/* fixed independent of nav (which scrolls away) — a G-force-themed tick
+   ruler; ticks are laid out by JS at the beats' real scroll fractions */
+#scrubber {
+  position: fixed; top: 24px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  width: min(460px, 62vw);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  cursor: grab;
+  touch-action: none;
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+#scrubber:hover, #scrubber.dragging { opacity: 1; }
+#scrubber:active { cursor: grabbing; }
+.scrubber-track {
+  position: relative;
+  width: 100%; height: 16px;
+}
+.scrubber-tick {
+  position: absolute; top: 0;
+  width: 1px; height: 7px;
+  background: #fff;
+  transform: translateX(-50%);
+}
+.scrubber-tick.major { height: 14px; }
+.scrubber-playhead {
+  position: absolute; top: 0;
+  width: 2px; height: 16px;
+  background: var(--red-bright);
+  transform: translateX(-50%);
+}
+.scrubber-label {
+  font-size: 0.62rem; letter-spacing: 0.14em;
+  color: #fff;
+}
+
+/* ---------- music toggle ---------- */
+#music-toggle {
+  position: fixed; right: 14px; bottom: 14px; z-index: 40;
+  width: 34px; height: 34px;
+  border-radius: 50%; border: 1px solid rgba(233, 237, 247, 0.25);
+  background: rgba(4, 7, 15, 0.8);
+  color: var(--ink-dim);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: color 0.25s, border-color 0.25s;
+}
+#music-toggle:hover { color: var(--ink); border-color: rgba(233, 237, 247, 0.45); }
+#music-toggle[aria-pressed="false"] #music-waves { opacity: 0.25; }
 
 /* ---------- layout ---------- */
 /* canvas is fixed at z-index 2: the giant hero type sits below it (z1),
@@ -184,6 +275,40 @@ section { position: relative; }
 .panel p {
   font-size: 1rem; line-height: 1.65; color: var(--ink-dim);
 }
+.merch-heading {
+  font-family: var(--font-mono);
+  font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink);
+  margin-top: 10px;
+}
+.merch-tagline {
+  font-size: 0.85rem; line-height: 1.5; color: var(--ink-dim);
+  margin-top: -6px;
+}
+.merch-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 8px; width: 100%;
+  margin-top: 4px;
+}
+.merch-grid img {
+  width: 100%; aspect-ratio: 1; object-fit: cover;
+  border-radius: 2px;
+  background: var(--navy-2);
+}
+.merch-cta {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 12px 22px;
+  background: var(--ink);
+  color: var(--navy-0);
+  border: none; border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem; letter-spacing: 0.16em;
+  cursor: pointer;
+  transition: background 0.25s, transform 0.15s;
+}
+.merch-cta:hover { background: #fff; }
+.merch-cta:active { transform: scale(0.97); }
 
 /* ---------- exploded ---------- */
 /* the diffuser->exploded transition crosses from a pinned shot into a
@@ -199,6 +324,12 @@ section { position: relative; }
   padding: 0 8vw 10vh;
   gap: 14px;
   pointer-events: none;
+}
+/* the section is pointer-events:none so it never blocks the 3D scene
+   behind it — the merch button/thumbnails re-enable it for themselves */
+.exploded-head .merch-cta,
+.exploded-head .merch-grid img {
+  pointer-events: auto;
 }
 
 #callouts { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
@@ -287,16 +418,25 @@ section { position: relative; }
 footer {
   padding: 40px; text-align: center;
   border-top: 1px solid var(--hairline);
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
 }
-footer .mono { font-size: 0.6rem; }
+.footer-links {
+  display: flex; gap: 32px;
+}
+.footer-links a {
+  font-size: 0.68rem; letter-spacing: 0.2em;
+  color: var(--ink-dim);
+  text-decoration: none;
+  transition: color 0.25s;
+}
+.footer-links a:hover { color: var(--ink); }
+.footer-disclaimer { font-size: 0.6rem; }
 
 @media (max-width: 640px) {
-  /* space-between with only one child left (the others go display:none
-     below, removed from flex layout entirely) collapses it to flex-start —
-     justify-content:center here is what keeps it visually centered */
-  nav { padding: 16px 18px; justify-content: center; }
-  .nav-left, .nav-right { display: none; }
-  .nav-center { font-size: 0.7rem; letter-spacing: 0.22em; }
+  nav { padding: 18px 16px; gap: 20px; }
+  .nav-link { font-size: 0.6rem; letter-spacing: 0.14em; }
+
+  #scrubber { width: min(460px, 74vw); top: 16px; }
 
   /* the projected spec-callout labels (.hero-callout / .callout) are
      nowrap text positioned from raw 3D->screen pixel math with no

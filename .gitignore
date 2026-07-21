@@ -2,3 +2,7 @@ node_modules
 dist
 .DS_Store
 *.local
+
+# raw AI-generated merch drafts awaiting review/editing — only the
+# approved finals in public/merch/ get committed
+assets/merch-generated
