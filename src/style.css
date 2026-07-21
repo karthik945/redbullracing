@@ -189,16 +189,37 @@ nav {
 /* ---------- music toggle ---------- */
 #music-toggle {
   position: fixed; right: 14px; bottom: 14px; z-index: 40;
-  width: 34px; height: 34px;
-  border-radius: 50%; border: 1px solid rgba(233, 237, 247, 0.25);
+  height: 34px; padding: 0 14px;
+  border-radius: 17px; border: 1px solid rgba(233, 237, 247, 0.25);
   background: rgba(4, 7, 15, 0.8);
   color: var(--ink-dim);
-  display: flex; align-items: center; justify-content: center;
+  font-size: 0.62rem; letter-spacing: 0.14em;
+  display: flex; align-items: center; gap: 10px;
   cursor: pointer;
   transition: color 0.25s, border-color 0.25s;
 }
 #music-toggle:hover { color: var(--ink); border-color: rgba(233, 237, 247, 0.45); }
-#music-toggle[aria-pressed="false"] #music-waves { opacity: 0.25; }
+.music-bars {
+  display: flex; align-items: flex-end; gap: 2px;
+  height: 12px;
+}
+.music-bars span {
+  width: 2px; height: 40%;
+  background: currentColor;
+  border-radius: 1px;
+  animation: music-bar 0.9s ease-in-out infinite;
+  animation-play-state: paused;
+}
+.music-bars span:nth-child(1) { animation-delay: 0s; }
+.music-bars span:nth-child(2) { animation-delay: 0.15s; }
+.music-bars span:nth-child(3) { animation-delay: 0.3s; }
+.music-bars span:nth-child(4) { animation-delay: 0.45s; }
+@keyframes music-bar {
+  0%, 100% { height: 25%; }
+  50% { height: 100%; }
+}
+#music-toggle[aria-pressed="true"] .music-bars span { animation-play-state: running; }
+#music-toggle[aria-pressed="false"] .music-bars span { height: 15%; }
 
 /* ---------- layout ---------- */
 /* canvas is fixed at z-index 2: the giant hero type sits below it (z1),
@@ -269,8 +290,6 @@ section { position: relative; }
 }
 .panel {
   width: min(420px, 82vw);
-  padding: 30px 0;
-  border-top: 1px solid var(--hairline);
 }
 .panel.left  { margin-left: 8vw; }
 .panel.right { margin-left: auto; margin-right: 8vw; }
@@ -279,6 +298,13 @@ section { position: relative; }
    becomes the containing block for any position:fixed descendant, which
    would hijack GSAP's pin (that's what made the text vanish off-screen). */
 .panel-inner {
+  /* border/padding moved here from .panel: .panel-inner is what the tuner
+     actually drags (translate), while .panel itself never moves — a
+     border on the static .panel stayed behind whenever the text was
+     dragged, visually detaching from it. Now the divider travels with
+     the content as one unit. */
+  padding: 30px 0;
+  border-top: 1px solid var(--hairline);
   display: flex; flex-direction: column; gap: 14px;
 }
 .panel-num { color: var(--red-bright); }

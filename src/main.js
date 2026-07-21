@@ -1084,18 +1084,44 @@ document.querySelectorAll(".footer-merch-link").forEach((a) => {
 document.getElementById("nav-cart")?.addEventListener("click", (e) => e.preventDefault());
 document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preventDefault());
 
-/* ================= music ================= */
+/* ================= music =================
+   on by default — browsers block unmuted autoplay before any user
+   gesture, so we try immediately, and if that's blocked, start on the
+   very first interaction anywhere on the page instead. The button
+   reflects real playback state (via play/pause events) rather than
+   tracking its own — so it's correct however playback actually started. */
 {
   const audio = document.getElementById("bgm");
   const btn = document.getElementById("music-toggle");
+  const stateEl = document.getElementById("music-state");
   audio.volume = 0.55;
+  let wantsMusic = true;
+
+  const syncButton = () => {
+    const playing = !audio.paused;
+    btn.setAttribute("aria-pressed", String(playing));
+    stateEl.textContent = playing ? "ON" : "OFF";
+  };
+  audio.addEventListener("play", syncButton);
+  audio.addEventListener("pause", syncButton);
+
+  const tryPlay = () => { if (wantsMusic) audio.play().catch(() => {}); };
+  tryPlay();
+  const firstInteraction = () => {
+    tryPlay();
+    window.removeEventListener("pointerdown", firstInteraction);
+    window.removeEventListener("keydown", firstInteraction);
+  };
+  window.addEventListener("pointerdown", firstInteraction);
+  window.addEventListener("keydown", firstInteraction);
+
   btn.addEventListener("click", () => {
     if (audio.paused) {
+      wantsMusic = true;
       audio.play().catch(() => {});
-      btn.setAttribute("aria-pressed", "true");
     } else {
+      wantsMusic = false;
       audio.pause();
-      btn.setAttribute("aria-pressed", "false");
     }
   });
 }
@@ -1133,6 +1159,7 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
     "#nav-home", "#nav-merch-wrap", "#nav-cart",
     "#shot-frontwing .panel-inner", "#shot-cockpit .panel-inner", "#shot-rearwing .panel-inner", "#shot-diffuser .panel-inner",
     "#shot-frontwing .merch-block", "#shot-cockpit .merch-block", "#shot-rearwing .merch-block", "#shot-diffuser .merch-block",
+    "#exploded .section-text", "#stats .section-text", "#closer .section-text",
     "#exploded .merch-block", "#stats .merch-block", "#closer .merch-block",
   ];
   // baked-in defaults from a prior tuner EXPORT; localStorage (an in-progress
@@ -1214,7 +1241,7 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
         padding: 6px 0; font-family: inherit; font-size: 9px; letter-spacing: .1em; cursor: pointer; }
       #tuner-panel .hint { margin-top: 8px; line-height: 1.5; opacity: .7; }
       #tuner-panel .beat { color: #ffc906; }
-      body.tuning .panel-inner, body.tuning .hero-sub, body.tuning .merch-block, body.tuning #nav-home, body.tuning #nav-merch-wrap, body.tuning #nav-cart { outline: 1px dashed rgba(255,201,6,.5); cursor: grab; }
+      body.tuning .panel-inner, body.tuning .hero-sub, body.tuning .merch-block, body.tuning .section-text, body.tuning #nav-home, body.tuning #nav-merch-wrap, body.tuning #nav-cart { outline: 1px dashed rgba(255,201,6,.5); cursor: grab; }
       /* native browser resize handle — the only reliable cross-browser way
          to let the merch teaser box be resized without hand-rolled corner-
          drag math; ResizeObserver (set up in JS) persists + exports it */

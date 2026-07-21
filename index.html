@@ -48,13 +48,14 @@
     <a class="nav-link mono" href="#" id="nav-cart">CART <span id="cart-count">0</span></a>
   </nav>
 
-  <!-- background music -->
+  <!-- background music: on by default (starts as soon as the browser
+       allows, see main.js), user can turn it off -->
   <audio id="bgm" src="/apex-turn.mp3" loop preload="auto"></audio>
-  <button id="music-toggle" title="Toggle music" aria-pressed="false">
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6">
-      <path d="M4 9v6h4l5 4V5L8 9H4z" stroke-linejoin="round" />
-      <path id="music-waves" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11" stroke-linecap="round" />
-    </svg>
+  <button id="music-toggle" class="mono" title="Toggle music" aria-pressed="true">
+    <span id="music-state">ON</span>
+    <span class="music-bars" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+    </span>
   </button>
 
   <main>
