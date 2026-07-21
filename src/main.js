@@ -1094,7 +1094,7 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
   const audio = document.getElementById("bgm");
   const btn = document.getElementById("music-toggle");
   const stateEl = document.getElementById("music-state");
-  audio.volume = 0.55;
+  audio.volume = 0.22; // subtle background presence, not a lead element
   let wantsMusic = true;
 
   const syncButton = () => {
@@ -1155,7 +1155,7 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
   // .merch-block, separate from the main story text — draggable AND
   // resizable (see the ResizeObserver setup below), independent per section
   const panelKeys = [
-    ".hero-sub",
+    ".hero-sub", "#music-toggle",
     "#nav-home", "#nav-merch-wrap", "#nav-cart",
     "#shot-frontwing .panel-inner", "#shot-cockpit .panel-inner", "#shot-rearwing .panel-inner", "#shot-diffuser .panel-inner",
     "#shot-frontwing .merch-block", "#shot-cockpit .merch-block", "#shot-rearwing .merch-block", "#shot-diffuser .merch-block",
@@ -1241,7 +1241,7 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
         padding: 6px 0; font-family: inherit; font-size: 9px; letter-spacing: .1em; cursor: pointer; }
       #tuner-panel .hint { margin-top: 8px; line-height: 1.5; opacity: .7; }
       #tuner-panel .beat { color: #ffc906; }
-      body.tuning .panel-inner, body.tuning .hero-sub, body.tuning .merch-block, body.tuning .section-text, body.tuning #nav-home, body.tuning #nav-merch-wrap, body.tuning #nav-cart { outline: 1px dashed rgba(255,201,6,.5); cursor: grab; }
+      body.tuning .panel-inner, body.tuning .hero-sub, body.tuning .merch-block, body.tuning .section-text, body.tuning #nav-home, body.tuning #nav-merch-wrap, body.tuning #nav-cart, body.tuning #music-toggle { outline: 1px dashed rgba(255,201,6,.5); cursor: grab; }
       /* native browser resize handle — the only reliable cross-browser way
          to let the merch teaser box be resized without hand-rolled corner-
          drag math; ResizeObserver (set up in JS) persists + exports it */

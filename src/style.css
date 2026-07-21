@@ -188,7 +188,7 @@ nav {
 
 /* ---------- music toggle ---------- */
 #music-toggle {
-  position: fixed; right: 14px; top: 14px; z-index: 40;
+  position: fixed; left: clamp(24px, 22vw, 420px); top: 90px; z-index: 40;
   height: 34px; padding: 0 14px;
   border-radius: 17px; border: 1px solid rgba(233, 237, 247, 0.25);
   background: rgba(4, 7, 15, 0.8);
@@ -531,7 +531,7 @@ footer {
   footer .mono { letter-spacing: 0.1em; line-height: 1.6; }
 
   #tuner-btn { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
-  #music-toggle { top: calc(14px + env(safe-area-inset-top, 0px)); }
+  #music-toggle { top: calc(70px + env(safe-area-inset-top, 0px)); left: 20px; }
 }
 
 @media (max-width: 400px) {
