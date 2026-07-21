@@ -620,10 +620,10 @@ composer.addPass(new OutputPass());
    panels always fall into black space (panel left => car right) */
 const beats = [
   { el: "#hero",           pos: [0, 11.6, -1.15],   look: [0, 0, 0.6] }, // top view
-  { el: "#shot-frontwing", pos: [1.5, 3.5, 5.9],    look: [-0.8506223171203958, 0.2, 2.0003749859571616] },  // high front view, car right
+  { el: "#shot-frontwing", pos: [1.5, 3.5, 5.9],    look: [-0.8511347302152529, 0.20330249601741043, 1.997890180630147] },  // high front view, car right
   { el: "#shot-cockpit",   pos: [2.6, 3.2, 0.6],    look: [-1.25, 0.25, 0.2] }, // car raised (as asked); x untouched
   { el: "#shot-rearwing",  pos: [-1.9, 2.4, -5.3],  look: [-1.35, 1.0, -2.2] }, // car left, text right
-  { el: "#shot-diffuser",  pos: [1.9, 0.7, -5.5],   look: [0.9, 0.5, -2.4] },   // car untouched; only text moved left
+  { el: "#shot-diffuser",  pos: [1.9, 0.7, -5.5],   look: [0.8984686623891467, 0.5007719836688274, -2.4004441744764797] },   // car untouched; only text moved left
   { el: "#exploded",       pos: [-6.8, 5.2, -9.8],  look: [0.6522187720162681, -0.015366536541894321, -0.23141340437226093] },
   { el: "#stats",          pos: [9.8, 1.2, 0.6],    look: [-0.05079550063800384, 1.1420031139712665, 0.09023585784388652] },
   { el: "#closer",         pos: [1.5, 0.8, 6.8],    look: [-0.2062473988981952, 1.389750463683058, 0.35174748023560704] },
@@ -1130,6 +1130,7 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
   // resizable (see the ResizeObserver setup below), independent per section
   const panelKeys = [
     ".hero-sub",
+    "#nav-home", "#nav-merch-wrap", "#nav-cart",
     "#shot-frontwing .panel-inner", "#shot-cockpit .panel-inner", "#shot-rearwing .panel-inner", "#shot-diffuser .panel-inner",
     "#shot-frontwing .merch-block", "#shot-cockpit .merch-block", "#shot-rearwing .merch-block", "#shot-diffuser .merch-block",
     "#exploded .merch-block", "#stats .merch-block", "#closer .merch-block",
@@ -1137,16 +1138,27 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
   // baked-in defaults from a prior tuner EXPORT; localStorage (an in-progress
   // tuning session) still takes precedence over these when present
   const DEFAULT_PANEL_OFFSETS = {
-    "#shot-frontwing .panel-inner": [-107.1171875, -238.0390625],
+    "#shot-frontwing .panel-inner": [97.29296875, -275.42578125],
     "#shot-cockpit .panel-inner": [-664.46875, -420.484375],
-    "#shot-rearwing .panel-inner": [-183.40234375, 45.68359375],
+    "#shot-rearwing .panel-inner": [-80.17578125, -273.52734375],
     "#shot-diffuser .panel-inner": [63.12890625, -263.78515625],
-    // the previous whole-section drag offsets for anatomy/stats/closer no
-    // longer apply now that .merch-block is a distinct child element —
-    // those 3 start at [0,0] (natural flex position) until re-tuned
+    "#shot-cockpit .merch-block": [448.640625, -200.92578125],
+    "#shot-diffuser .merch-block": [-0.5546875, 17.47265625],
+    "#exploded .merch-block": [-601.98828125, -234.84765625],
+    "#stats .merch-block": [-934.203125, 155.09375],
+    "#closer .merch-block": [292.51171875, 70.05859375],
+  };
+  const DEFAULT_PANEL_SIZES = {
+    "#shot-frontwing .merch-block": [300, 300],
+    "#shot-cockpit .merch-block": [300, 300],
+    "#shot-rearwing .merch-block": [300, 300],
+    "#shot-diffuser .merch-block": [300, 300],
+    "#exploded .merch-block": [300, 205],
+    "#stats .merch-block": [300, 205],
+    "#closer .merch-block": [300, 205],
   };
   const panelOffsets = { ...DEFAULT_PANEL_OFFSETS, ...saved.panels };
-  const panelSizes = { ...(saved.sizes || {}) };
+  const panelSizes = { ...DEFAULT_PANEL_SIZES, ...(saved.sizes || {}) };
   // CSS `translate` is separate from `transform`, so GSAP reveals
   // (which write transform) can never wipe a dragged position
   const setOffset = (el, off) => {
@@ -1202,7 +1214,7 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
         padding: 6px 0; font-family: inherit; font-size: 9px; letter-spacing: .1em; cursor: pointer; }
       #tuner-panel .hint { margin-top: 8px; line-height: 1.5; opacity: .7; }
       #tuner-panel .beat { color: #ffc906; }
-      body.tuning .panel-inner, body.tuning .hero-sub, body.tuning .merch-block { outline: 1px dashed rgba(255,201,6,.5); cursor: grab; }
+      body.tuning .panel-inner, body.tuning .hero-sub, body.tuning .merch-block, body.tuning #nav-home, body.tuning #nav-merch-wrap, body.tuning #nav-cart { outline: 1px dashed rgba(255,201,6,.5); cursor: grab; }
       /* native browser resize handle — the only reliable cross-browser way
          to let the merch teaser box be resized without hand-rolled corner-
          drag math; ResizeObserver (set up in JS) persists + exports it */

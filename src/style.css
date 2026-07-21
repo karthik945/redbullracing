@@ -86,12 +86,23 @@ nav {
   padding: 26px 34px;
 }
 .nav-link {
+  position: relative;
   font-size: 0.68rem; letter-spacing: 0.2em;
   color: var(--ink-dim);
   text-decoration: none;
   transition: color 0.25s;
 }
-.nav-link:hover { color: var(--ink); }
+.nav-link::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: -7px;
+  height: 1px;
+  background: var(--red-bright);
+  box-shadow: 0 0 8px var(--red-bright), 0 0 2px var(--red-bright);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.nav-link:hover { color: #fff; }
+.nav-link:hover::after { opacity: 1; }
 #nav-cart { display: flex; align-items: center; gap: 6px; }
 #cart-count {
   font-size: 0.6rem; color: var(--navy-0);
@@ -102,7 +113,12 @@ nav {
 }
 .nav-item { position: relative; }
 #nav-merch {
-  background: none; border: none; padding: 0; font: inherit;
+  /* buttons don't inherit font-family/size from the page by default —
+     `font: inherit` fixed that but, being an ID selector, it also
+     overrode .nav-link's own font-size (ID beats class), making
+     MERCHANDISE render at a different size than HOME/CART. Only reset
+     family here and let .nav-link's font-size cascade normally. */
+  background: none; border: none; padding: 0; font-family: inherit;
   cursor: pointer;
 }
 .nav-dropdown {
@@ -433,7 +449,11 @@ section { position: relative; }
   font-size: clamp(4rem, 13vw, 12rem);
   letter-spacing: 0.04em;
   line-height: 1;
-  color: transparent;
+  /* a hint of fill instead of pure transparent — on narrow glyphs (the "I"
+     especially) a fully transparent interior lets the stroke's inner and
+     outer edges show through each other, reading as a doubled/uneven line
+     compared to wider letters. A faint fill breaks that up. */
+  color: rgba(233, 237, 247, 0.05);
   -webkit-text-stroke: 1px rgba(233, 237, 247, 0.35);
 }
 .closer-sub { color: var(--ink-dim); }
