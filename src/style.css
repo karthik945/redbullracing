@@ -145,6 +145,8 @@ nav {
   transition: opacity 0.3s;
 }
 #scrubber:hover, #scrubber.dragging { opacity: 1; }
+/* not relevant on the hero/first screen — only appears once you scroll in */
+#scrubber.scrubber-hidden { opacity: 0; pointer-events: none; }
 #scrubber:active { cursor: grabbing; }
 .scrubber-track {
   position: relative;
@@ -309,6 +311,27 @@ section { position: relative; }
 }
 .merch-cta:hover { background: #fff; }
 .merch-cta:active { transform: scale(0.97); }
+
+/* shared "beside, not stacked below" layout for the 3 wide sections
+   (anatomy/stats/closer) that don't have a narrow .panel to constrain
+   width — without this wrapper, merch-grid stretches to the full
+   section width and its thumbnails render far larger than everywhere else */
+.section-row {
+  display: flex; flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 32px 56px;
+  width: 100%;
+  max-width: 900px;
+}
+.section-text {
+  display: flex; flex-direction: column; gap: 14px;
+  flex: 1 1 280px;
+}
+.merch-block {
+  display: flex; flex-direction: column; gap: 10px;
+  flex: 0 1 300px; max-width: 300px;
+}
 
 /* ---------- exploded ---------- */
 /* the diffuser->exploded transition crosses from a pinned shot into a

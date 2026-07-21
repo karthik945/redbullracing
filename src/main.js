@@ -469,10 +469,29 @@ const loaderEl = document.getElementById("loader");
 const loaderBright = document.getElementById("loader-logo-bright");
 const LOADER_MIN_MS = 2500;
 const loadStartTime = performance.now();
+
+// xhr.total is frequently 0/unset (no Content-Length, cached response,
+// single-chunk transfer) — when that happens the reveal never advances
+// past its initial hidden state. A time-based estimate guarantees the
+// logo visibly fills regardless of whether real byte-progress exists;
+// real progress (when available) can still push it ahead of the estimate.
+let loaderRealFrac = 0;
+function setLoaderFill(frac) {
+  const pct = Math.max(0, Math.min(1, frac)) * 100;
+  loaderBright.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
+}
+const loaderTimer = setInterval(() => {
+  const elapsed = performance.now() - loadStartTime;
+  const timeFrac = Math.min(elapsed / LOADER_MIN_MS, 0.96); // holds just under 100% until the real load confirms
+  setLoaderFill(Math.max(timeFrac, loaderRealFrac));
+}, 50);
+
 function dismissLoader(onDone) {
   const elapsed = performance.now() - loadStartTime;
   const wait = Math.max(0, LOADER_MIN_MS - elapsed);
   setTimeout(() => {
+    clearInterval(loaderTimer);
+    setLoaderFill(1);
     loaderEl.classList.add("done");
     onDone?.();
   }, wait);
@@ -534,12 +553,10 @@ loader.load(
     dismissLoader(introPlay);
   },
   (xhr) => {
-    if (xhr.total) {
-      const p = Math.round((xhr.loaded / xhr.total) * 100);
-      loaderBright.style.clipPath = `inset(0 ${100 - p}% 0 0)`;
-    }
+    if (xhr.total) loaderRealFrac = xhr.loaded / xhr.total;
   },
   (err) => {
+    clearInterval(loaderTimer);
     console.error("GLB load failed", err);
     // logo-only loader has no text in the golden path — only inject a
     // message for this edge case, so failure is still legible
@@ -977,6 +994,8 @@ const scrubberEl = document.getElementById("scrubber");
 const scrubberLabel = document.getElementById("scrubber-label");
 
 function updateScrubber(p) {
+  // only relevant once you've left the hero/first screen
+  scrubberEl.classList.toggle("scrubber-hidden", heroFade > 0.05);
   if (scrubberPlayhead) scrubberPlayhead.style.left = p * 100 + "%";
   let nearest = 0;
   for (let i = 1; i < beatProgress.length; i++) {
@@ -1106,7 +1125,15 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
   // ancestor .shot (a non-none transform/translate on an ancestor becomes
   // the containing block for .panel's position:fixed pin, which hijacks
   // GSAP's pin positioning entirely and sends the text off-screen).
-  const panelKeys = [".hero-sub", "#shot-frontwing .panel-inner", "#shot-cockpit .panel-inner", "#shot-rearwing .panel-inner", "#shot-diffuser .panel-inner", ".exploded-head", "#stats", "#closer"];
+  // each section's merch teaser (heading/tagline/images/button) is its own
+  // .merch-block, separate from the main story text — draggable AND
+  // resizable (see the ResizeObserver setup below), independent per section
+  const panelKeys = [
+    ".hero-sub",
+    "#shot-frontwing .panel-inner", "#shot-cockpit .panel-inner", "#shot-rearwing .panel-inner", "#shot-diffuser .panel-inner",
+    "#shot-frontwing .merch-block", "#shot-cockpit .merch-block", "#shot-rearwing .merch-block", "#shot-diffuser .merch-block",
+    "#exploded .merch-block", "#stats .merch-block", "#closer .merch-block",
+  ];
   // baked-in defaults from a prior tuner EXPORT; localStorage (an in-progress
   // tuning session) still takes precedence over these when present
   const DEFAULT_PANEL_OFFSETS = {
@@ -1114,11 +1141,12 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
     "#shot-cockpit .panel-inner": [-664.46875, -420.484375],
     "#shot-rearwing .panel-inner": [-183.40234375, 45.68359375],
     "#shot-diffuser .panel-inner": [63.12890625, -263.78515625],
-    "#stats": [9.28515625, 88.9765625],
-    ".exploded-head": [9.8359375, 17.23828125],
-    "#closer": [9.34765625, 118.7578125],
+    // the previous whole-section drag offsets for anatomy/stats/closer no
+    // longer apply now that .merch-block is a distinct child element —
+    // those 3 start at [0,0] (natural flex position) until re-tuned
   };
   const panelOffsets = { ...DEFAULT_PANEL_OFFSETS, ...saved.panels };
+  const panelSizes = { ...(saved.sizes || {}) };
   // CSS `translate` is separate from `transform`, so GSAP reveals
   // (which write transform) can never wipe a dragged position
   const setOffset = (el, off) => {
@@ -1131,6 +1159,27 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
     }
   };
   applyPanelOffsets();
+  for (const [k, size] of Object.entries(panelSizes)) {
+    const el = document.querySelector(k);
+    if (el) { el.style.width = size[0] + "px"; el.style.height = size[1] + "px"; }
+  }
+  // merch-blocks get a native resize handle in tuning mode (CSS `resize`) —
+  // ResizeObserver is the only reliable cross-browser way to detect that
+  // drag ending, so we can persist + export the new size like position
+  const sizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const key = entry.target.dataset.tuneKey;
+      if (!key) continue;
+      panelSizes[key] = [Math.round(entry.contentRect.width), Math.round(entry.contentRect.height)];
+    }
+    save();
+  });
+  panelKeys.filter((k) => k.includes(".merch-block")).forEach((k) => {
+    const el = document.querySelector(k);
+    if (!el) return;
+    el.dataset.tuneKey = k;
+    sizeObserver.observe(el);
+  });
   ceiling.material.color.setScalar(waterTune.sheen);
   water.material.uniforms.alpha.value = waterTune.alpha;
 
@@ -1153,7 +1202,11 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
         padding: 6px 0; font-family: inherit; font-size: 9px; letter-spacing: .1em; cursor: pointer; }
       #tuner-panel .hint { margin-top: 8px; line-height: 1.5; opacity: .7; }
       #tuner-panel .beat { color: #ffc906; }
-      body.tuning .panel-inner, body.tuning .hero-sub, body.tuning .exploded-head, body.tuning #stats, body.tuning #closer { outline: 1px dashed rgba(255,201,6,.5); cursor: grab; }
+      body.tuning .panel-inner, body.tuning .hero-sub, body.tuning .merch-block { outline: 1px dashed rgba(255,201,6,.5); cursor: grab; }
+      /* native browser resize handle — the only reliable cross-browser way
+         to let the merch teaser box be resized without hand-rolled corner-
+         drag math; ResizeObserver (set up in JS) persists + exports it */
+      body.tuning .merch-block { resize: both; overflow: auto; min-width: 160px; min-height: 120px; }
       body.tuning .exploded-head { pointer-events: auto; }
       body.tuning #webgl { pointer-events: auto !important; cursor: crosshair; }
     </style>
@@ -1210,6 +1263,7 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
     localStorage.setItem("rb19-tune", JSON.stringify({
       beats: beats.map((b) => ({ pos: b.pos, look: b.look })),
       panels: panelOffsets,
+      sizes: panelSizes,
     }));
   };
 
@@ -1272,7 +1326,7 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
   });
 
   ui.querySelector("#t-export").addEventListener("click", () => {
-    const data = JSON.stringify({ water: waterTune, beats: beats.map((b) => ({ el: b.el, pos: b.pos, look: b.look })), panels: panelOffsets }, null, 2);
+    const data = JSON.stringify({ water: waterTune, beats: beats.map((b) => ({ el: b.el, pos: b.pos, look: b.look })), panels: panelOffsets, sizes: panelSizes }, null, 2);
     navigator.clipboard?.writeText(data);
     console.log("RB19 TUNE EXPORT:\n" + data);
     ui.querySelector("#t-export").textContent = "COPIED!";
