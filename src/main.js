@@ -129,22 +129,36 @@ water.renderOrder = 2;
 water.material.needsUpdate = true;
 scene.add(water);
 
+/* shared builder for the several soft radial-gradient canvas textures used
+   as glows/shadows around the scene (ceiling reflection, contact shadow,
+   lamp glow, dust motes) — one implementation instead of four hand-rolled
+   copies of the same create-canvas/gradient/fillRect sequence */
+function radialGradientTexture(size, stops, innerRadius = 0, outerRadius = size / 2) {
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d");
+  const center = size / 2;
+  const g = ctx.createRadialGradient(center, center, innerRadius, center, center, outerRadius);
+  for (const [offset, color] of stops) g.addColorStop(offset, color);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  return new THREE.CanvasTexture(c);
+}
+
 /* dim ceiling glow — gives the water surface something to reflect all the
    way to the frame edges (bright center, soft falloff, never fully dark) */
-const ceilCanvas = document.createElement("canvas");
-ceilCanvas.width = ceilCanvas.height = 512;
-{
-  const ctx = ceilCanvas.getContext("2d");
-  const g = ctx.createRadialGradient(256, 256, 30, 256, 256, 256);
-  g.addColorStop(0, "rgba(30, 55, 110, 1)");
-  g.addColorStop(0.5, "rgba(14, 28, 60, 1)");
-  g.addColorStop(1, "rgba(4, 9, 22, 1)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 512, 512);
-}
+const ceilingTex = radialGradientTexture(
+  512,
+  [
+    [0, "rgba(30, 55, 110, 1)"],
+    [0.5, "rgba(14, 28, 60, 1)"],
+    [1, "rgba(4, 9, 22, 1)"],
+  ],
+  30
+);
 const ceiling = new THREE.Mesh(
   new THREE.PlaneGeometry(260, 260),
-  new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(ceilCanvas), side: THREE.DoubleSide })
+  new THREE.MeshBasicMaterial({ map: ceilingTex, side: THREE.DoubleSide })
 );
 ceiling.rotation.x = Math.PI / 2;
 ceiling.position.y = 14;
@@ -163,21 +177,20 @@ ceiling.visible = false;
 }
 
 /* contact shadow */
-const shadowCanvas = document.createElement("canvas");
-shadowCanvas.width = shadowCanvas.height = 512;
-{
-  const ctx = shadowCanvas.getContext("2d");
-  const g = ctx.createRadialGradient(256, 256, 20, 256, 256, 250);
-  g.addColorStop(0, "rgba(0,0,0,0.75)");
-  g.addColorStop(0.5, "rgba(0,0,0,0.35)");
-  g.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 512, 512);
-}
+const shadowTex = radialGradientTexture(
+  512,
+  [
+    [0, "rgba(0,0,0,0.75)"],
+    [0.5, "rgba(0,0,0,0.35)"],
+    [1, "rgba(0,0,0,0)"],
+  ],
+  20,
+  250
+);
 const contactShadow = new THREE.Mesh(
   new THREE.PlaneGeometry(9, 9),
   new THREE.MeshBasicMaterial({
-    map: new THREE.CanvasTexture(shadowCanvas),
+    map: shadowTex,
     transparent: true,
     depthWrite: false,
   })
@@ -255,25 +268,23 @@ frontFill.position.set(0, 3, 9);
 scene.add(frontFill);
 
 /* soft blue lamp glow at the beam's source — a sprite has no geometry
-   edges, so the overhead light never cuts off at any camera angle */
-const lampCanvas = document.createElement("canvas");
-lampCanvas.width = lampCanvas.height = 256;
-{
-  const ctx = lampCanvas.getContext("2d");
-  // falls fully to zero alpha by 55% of the radius, so the glow is
-  // already black well before it reaches the sprite's own edge —
-  // it can never be visibly "cut off" by anything, frame included
-  const g = ctx.createRadialGradient(128, 128, 4, 128, 128, 128);
-  g.addColorStop(0, "rgba(140, 185, 255, 0.8)");
-  g.addColorStop(0.25, "rgba(110, 160, 250, 0.18)");
-  g.addColorStop(0.55, "rgba(100, 150, 245, 0)");
-  g.addColorStop(1, "rgba(100, 150, 245, 0)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 256, 256);
-}
+   edges, so the overhead light never cuts off at any camera angle.
+   Falls fully to zero alpha by 55% of the radius, so the glow is already
+   black well before it reaches the sprite's own edge — it can never be
+   visibly "cut off" by anything, frame included. */
+const lampTex = radialGradientTexture(
+  256,
+  [
+    [0, "rgba(140, 185, 255, 0.8)"],
+    [0.25, "rgba(110, 160, 250, 0.18)"],
+    [0.55, "rgba(100, 150, 245, 0)"],
+    [1, "rgba(100, 150, 245, 0)"],
+  ],
+  4
+);
 const lampGlow = new THREE.Sprite(
   new THREE.SpriteMaterial({
-    map: new THREE.CanvasTexture(lampCanvas),
+    map: lampTex,
     transparent: true,
     depthWrite: false,
     depthTest: false,
@@ -340,17 +351,10 @@ const heroRim = new THREE.DirectionalLight(0x4f8dff, 0);
 heroRim.position.set(-5, 3.5, -6.5);
 scene.add(heroRim);
 
-function buildDustTexture() {
-  const c = document.createElement("canvas");
-  c.width = c.height = 64;
-  const ctx = c.getContext("2d");
-  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-  g.addColorStop(0, "rgba(255,255,255,0.9)");
-  g.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 64, 64);
-  return new THREE.CanvasTexture(c);
-}
+const dustTex = radialGradientTexture(64, [
+  [0, "rgba(255,255,255,0.9)"],
+  [1, "rgba(255,255,255,0)"],
+]);
 
 const DUST_COUNT = 650;
 const dustGeo = new THREE.BufferGeometry();
@@ -367,7 +371,7 @@ for (let i = 0; i < DUST_COUNT; i++) {
 dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
 const dustMat = new THREE.PointsMaterial({
   size: 0.05,
-  map: buildDustTexture(),
+  map: dustTex,
   transparent: true,
   opacity: 0,
   depthWrite: false,
@@ -744,22 +748,33 @@ const targetLook = new THREE.Vector3();
 let heroFade = 1;
 let introRadiusBoost = 1;
 
-/* ================= mouse parallax — subtle, car-only =================
-   Hover the cursor anywhere and the car nudges slightly toward it, like
-   it's reacting to your attention. Damped, so it never snaps; tiny
-   magnitudes, so it reads as alive rather than as an obvious effect. */
-let mouseX = 0, mouseY = 0; // raw target, normalized -1..1
-let parallaxX = 0, parallaxY = 0; // damped
-window.addEventListener("pointermove", (e) => {
-  mouseX = (e.clientX / window.innerWidth) * 2 - 1;
-  mouseY = (e.clientY / window.innerHeight) * 2 - 1;
-});
+/* ================= mouse parallax — subtle, hero-only =================
+   Hover the cursor anywhere over the hero and the car nudges slightly
+   toward it, like it's reacting to your attention. Damped, so it never
+   snaps; tiny magnitudes, so it reads as alive rather than as an obvious
+   effect. Scaled by heroFade — same hero-only fade every other piece of
+   hero dressing uses — so it never fights the pinned story panels, the
+   exploded-view callouts, or the tuner's own drag interactions past the
+   hero. Skipped on touch devices: there's no hover there, and the first
+   touch-move samples before a scroll gesture is recognized would otherwise
+   read as a one-off cursor position and snap the car toward it. */
+const mouseTarget = new THREE.Vector2(0, 0); // raw target, normalized -1..1
+const parallax = new THREE.Vector2(0, 0); // damped
+if (!isMobile) {
+  window.addEventListener("pointermove", (e) => {
+    mouseTarget.set((e.clientX / window.innerWidth) * 2 - 1, (e.clientY / window.innerHeight) * 2 - 1);
+  });
+}
+
+let lastParallaxShadowBucket = -1;
 
 function updateCamera(t, dt) {
   const p = Math.min(Math.max(window.scrollY / cachedDocH, 0), 1);
   const ct = curveT(p);
   posCurve.getPoint(ct, targetPos);
   lookCurve.getPoint(ct, targetLook);
+
+  heroFade = Math.max(0, 1 - p * 14);
 
   // idle sway, strongest at the hero, gone once the flight starts
   const idle = Math.max(0, 1 - p * 12);
@@ -776,15 +791,25 @@ function updateCamera(t, dt) {
   camera.position.copy(camPos);
   camera.lookAt(camLook);
 
-  // mouse parallax — same damped-chase feel as the camera, just much smaller
+  // mouse parallax — same damped-chase feel as the camera, just much smaller,
+  // and scaled down to nothing once heroFade fades out
   const pk = 1 - Math.exp(-dt * 4);
-  parallaxX += (mouseX - parallaxX) * pk;
-  parallaxY += (mouseY - parallaxY) * pk;
-  carGroup.position.x = parallaxX * 0.15;
-  carGroup.position.z = -parallaxY * 0.1;
-  carGroup.rotation.y = parallaxX * 0.02;
+  parallax.lerp(mouseTarget, pk);
+  carGroup.position.x = parallax.x * 0.15 * heroFade;
+  carGroup.position.z = -parallax.y * 0.1 * heroFade;
+  carGroup.rotation.y = parallax.x * 0.02 * heroFade;
 
-  heroFade = Math.max(0, 1 - p * 14);
+  // the car keeps moving under the parallax while heroFade is up, but the
+  // shadow map only rebakes on explicit triggers elsewhere — re-arm it here
+  // too, throttled like the old roaming-searchlight rebake used to be
+  if (heroFade > 0.01) {
+    const bucket = Math.floor(t * 30);
+    if (bucket !== lastParallaxShadowBucket) {
+      lastParallaxShadowBucket = bucket;
+      renderer.shadowMap.needsUpdate = true;
+    }
+  }
+
   // hero stays pure black-and-white — the accent light belongs to the later beats
   accentSpot.intensity = 110 * (1 - heroFade);
   beam.visible = heroFade < 0.4;
@@ -903,9 +928,8 @@ function updateExplode(p) {
 let calloutsWereVisible = true;
 function updateCallouts() {
   const visible = explode > 0.45 && explodeParts.length >= 10;
-  // same reasoning as updateHeroCallouts: skip the loop once hidden, which
-  // is true for the vast majority of the scroll range (only the anatomy
-  // beat's explode peak shows these)
+  // skip the loop once hidden, which is true for the vast majority of the
+  // scroll range (only the anatomy beat's explode peak shows these)
   if (!visible) {
     if (calloutsWereVisible) {
       for (const el of Object.values(calloutEls)) el.style.opacity = 0;
@@ -1089,7 +1113,7 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
 
 /* ================= TUNER =================
    Press T (or click the ⚙ button) to open.
-   - Sliders: water sheen / waviness / surface alpha / light pool
+   - Sliders: water sheen / waviness / surface alpha
    - Drag on the scene: reframe the CURRENT beat (car position in frame)
      · plain drag  = pan the camera's look target (moves the car in frame)
      · shift+drag  = truck the camera itself
