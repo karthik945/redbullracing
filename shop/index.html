@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Merchandise — RB19</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+  <link rel="stylesheet" href="/src/shop.css" />
+</head>
+<body data-page="shop-index">
+  <nav>
+    <a class="nav-link mono" href="/">HOME</a>
+    <a class="nav-link mono" href="/shop/index.html">MERCHANDISE</a>
+    <a class="nav-link mono" href="#" id="nav-cart">CART <span id="cart-count">0</span></a>
+  </nav>
+
+  <main class="shop-main">
+    <header class="shop-header">
+      <span class="mono shop-eyebrow">Oracle Red Bull Racing</span>
+      <h1>Merchandise</h1>
+      <p class="shop-lede">Seven collections drawn from the RB19's record-breaking 2023 season — pick a category to browse.</p>
+    </header>
+
+    <div class="shop-cat-grid" id="cat-grid"></div>
+  </main>
+
+  <footer>
+    <div class="footer-links mono">
+      <a href="/">HOME</a>
+      <a href="#" id="footer-cart">CART</a>
+    </div>
+    <span class="mono footer-disclaimer">UNOFFICIAL FAN TRIBUTE — NOT AFFILIATED WITH RED BULL RACING OR FORMULA 1</span>
+  </footer>
+
+  <script type="module" src="/src/shop.js"></script>
+</body>
+</html>

@@ -280,6 +280,9 @@ section { position: relative; }
   color: var(--ink); max-width: 36ch;
   text-shadow: 0 1px 18px rgba(0, 0, 0, 0.9);
 }
+.kicker, .hero-tag { transition: opacity 0.6s ease; }
+.hero-sub.fact-swap .kicker,
+.hero-sub.fact-swap .hero-tag { opacity: 0; }
 .scroll-cue {
   position: absolute !important; bottom: 40px; right: 34px; left: auto;
   transform: none;
@@ -361,6 +364,8 @@ section { position: relative; }
   border: none; border-radius: 2px;
   font-family: var(--font-mono);
   font-size: 0.68rem; letter-spacing: 0.16em;
+  text-decoration: none;
+  display: inline-block;
   cursor: pointer;
   transition: background 0.25s, transform 0.15s;
 }

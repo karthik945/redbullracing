@@ -11,6 +11,9 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import { updateCartBadges } from "./cart.js";
+
+updateCartBadges(); // reflects whatever's already in the cart from /shop
 
 gsap.registerPlugin(ScrollTrigger);
 RectAreaLightUniformsLib.init();
@@ -1024,12 +1027,48 @@ function updateScrubber(p) {
   });
 }
 
+/* ================= hero fact rotation =================
+   The kicker + tagline under the hero title cycle through a few Red Bull
+   Racing / RB19 facts, cross-fading every few minutes so the hero doesn't
+   read as static on a long visit — purely cosmetic, doesn't touch the 3D
+   scene or anything scroll-driven. */
+const HERO_FACTS = [
+  { kicker: "MAX VERSTAPPEN · SERGIO PÉREZ", tag: "The most dominant car in Formula 1 history.<br/>Twenty-one wins from twenty-two races." },
+  { kicker: "2023 CONSTRUCTORS' CHAMPIONS", tag: "860 points scored across the season —<br/>a new Formula 1 record." },
+  { kicker: "MAX VERSTAPPEN", tag: "19 wins in a single season — the most<br/>by any driver in Formula 1 history." },
+  { kicker: "10 CONSECUTIVE VICTORIES", tag: "A record-breaking win streak from<br/>Miami to Monza, 2023." },
+  { kicker: "ORACLE RED BULL RACING", tag: "Founded in 2005. Six-time Formula 1<br/>Constructors' Champions by the end of 2023." },
+  { kicker: "RB19 · CHASSIS", tag: "Designed under technical director<br/>Adrian Newey for the 2023 season." },
+];
+const HERO_FACT_INTERVAL_MS = 4 * 60 * 1000; // "every few minutes"
+
+{
+  const heroSubEl = document.querySelector(".hero-sub");
+  const kickerEl = document.querySelector(".hero-sub .kicker");
+  const tagEl = document.querySelector(".hero-sub .hero-tag");
+  if (heroSubEl && kickerEl && tagEl) {
+    let factIndex = 0;
+    setInterval(() => {
+      factIndex = (factIndex + 1) % HERO_FACTS.length;
+      heroSubEl.classList.add("fact-swap");
+      setTimeout(() => {
+        kickerEl.textContent = HERO_FACTS[factIndex].kicker;
+        tagEl.innerHTML = HERO_FACTS[factIndex].tag;
+        heroSubEl.classList.remove("fact-swap");
+      }, 600); // matches the CSS opacity transition duration
+    }, HERO_FACT_INTERVAL_MS);
+  }
+}
+
 /* ================= nav / footer links ================= */
 document.getElementById("nav-home")?.addEventListener("click", (e) => {
   e.preventDefault();
   lenis.scrollTo(0, { duration: 1.2 });
 });
 {
+  // dropdown links now navigate to real /shop pages (not in-page anchors),
+  // so this only needs to manage the open/close state — clicks fall
+  // through to normal <a> navigation
   const merchBtn = document.getElementById("nav-merch");
   const dropdown = document.getElementById("nav-dropdown");
   if (merchBtn && dropdown) {
@@ -1042,14 +1081,6 @@ document.getElementById("nav-home")?.addEventListener("click", (e) => {
       const open = dropdown.classList.toggle("open");
       merchBtn.setAttribute("aria-expanded", String(open));
     });
-    dropdown.querySelectorAll("a").forEach((a) => {
-      a.addEventListener("click", (e) => {
-        e.preventDefault();
-        closeDropdown();
-        const target = document.querySelector(a.getAttribute("href"));
-        if (target) lenis.scrollTo(target, { duration: 1.2 });
-      });
-    });
     window.addEventListener("click", (e) => {
       if (!e.target.closest("#nav-merch-wrap")) closeDropdown();
     });
@@ -1058,13 +1089,8 @@ document.getElementById("nav-home")?.addEventListener("click", (e) => {
     });
   }
 }
-document.querySelectorAll(".footer-merch-link").forEach((a) => {
-  a.addEventListener("click", (e) => {
-    e.preventDefault();
-    const target = document.querySelector(a.getAttribute("href"));
-    if (target) lenis.scrollTo(target, { duration: 1.2 });
-  });
-});
+// the footer MERCHANDISE link now navigates to /shop/index.html directly —
+// no in-page-scroll intercept needed
 // cart is a stub — real checkout is a later phase, inert for now
 document.getElementById("nav-cart")?.addEventListener("click", (e) => e.preventDefault());
 document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preventDefault());
