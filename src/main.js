@@ -16,7 +16,7 @@ gsap.registerPlugin(ScrollTrigger);
 RectAreaLightUniformsLib.init();
 
 /* live-tunable water params (see tuner at bottom of file) */
-const waterTune = { distortion: 1.8, alpha: 0.73, sheen: 0.6, pool: 0.55 };
+const waterTune = { distortion: 1.8, alpha: 0.73, sheen: 0.6 };
 try { Object.assign(waterTune, JSON.parse(localStorage.getItem("rb19-water") || "{}")); } catch (e) {}
 
 /* buttery inertial scrolling */
@@ -27,7 +27,7 @@ gsap.ticker.lagSmoothing(0);
 
 /* ================= renderer / scene =================
    Neon dark room: white RB19 sign as the hero light, real water floor,
-   amber + white keys. Camera = one continuous single-take flight. */
+   blue + white keys. Camera = one continuous single-take flight. */
 
 // coarse-pointer / narrow-viewport devices get lighter render settings —
 // phone GPUs can't carry the same shadow/MSAA/pixel-ratio budget as desktop
@@ -44,7 +44,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.shadowMap.autoUpdate = false; // static car: bake once
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x020306);
+scene.background = new THREE.Color(0x050e22);
 
 /* env map built from the room itself */
 {
@@ -56,13 +56,13 @@ scene.background = new THREE.Color(0x020306);
   );
   signGlow.position.set(0, 2.9, -4.4);
   env.add(signGlow);
-  const amberGlow = new THREE.Mesh(
+  const accentGlow = new THREE.Mesh(
     new THREE.PlaneGeometry(3.2, 3.2),
-    new THREE.MeshBasicMaterial({ color: new THREE.Color(3.0, 1.9, 0.7), side: THREE.DoubleSide })
+    new THREE.MeshBasicMaterial({ color: new THREE.Color(1.1, 1.7, 3.0), side: THREE.DoubleSide })
   );
-  amberGlow.position.set(0.45, 7, 0.5);
-  amberGlow.rotation.x = Math.PI / 2;
-  env.add(amberGlow);
+  accentGlow.position.set(0.45, 7, 0.5);
+  accentGlow.rotation.x = Math.PI / 2;
+  env.add(accentGlow);
   const coolCard = new THREE.Mesh(
     new THREE.PlaneGeometry(6, 2.4),
     new THREE.MeshBasicMaterial({ color: new THREE.Color(0.5, 0.65, 1.0) })
@@ -75,7 +75,7 @@ scene.background = new THREE.Color(0x020306);
   scene.environmentIntensity = 1.0;
   pmrem.dispose();
   signGlow.geometry.dispose(); signGlow.material.dispose();
-  amberGlow.geometry.dispose(); amberGlow.material.dispose();
+  accentGlow.geometry.dispose(); accentGlow.material.dispose();
   coolCard.geometry.dispose(); coolCard.material.dispose();
 }
 
@@ -112,7 +112,7 @@ const water = new Water(new THREE.PlaneGeometry(160, 160), {
   waterNormals,
   sunDirection: new THREE.Vector3(0, 1, 0),
   sunColor: 0x000000,
-  waterColor: 0x01040a,
+  waterColor: 0x0a1c3e,
   distortionScale: 3.4,
   fog: false,
 });
@@ -136,9 +136,9 @@ ceilCanvas.width = ceilCanvas.height = 512;
 {
   const ctx = ceilCanvas.getContext("2d");
   const g = ctx.createRadialGradient(256, 256, 30, 256, 256, 256);
-  g.addColorStop(0, "rgba(15, 17, 22, 1)");
-  g.addColorStop(0.5, "rgba(7, 8, 11, 1)");
-  g.addColorStop(1, "rgba(2, 3, 5, 1)");
+  g.addColorStop(0, "rgba(30, 55, 110, 1)");
+  g.addColorStop(0.5, "rgba(14, 28, 60, 1)");
+  g.addColorStop(1, "rgba(4, 9, 22, 1)");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 512, 512);
 }
@@ -186,65 +186,8 @@ contactShadow.rotation.x = -Math.PI / 2;
 contactShadow.position.y = 0.015;
 contactShadow.scale.set(0.62, 1, 1);
 contactShadow.renderOrder = 5;
-scene.add(contactShadow);
-
-/* ================= underwater headline =================
-   giant type lying flat under the water surface; ripples distort it,
-   the car sits on top of it */
-
-let waterTextMat = null;
-{
-  const c = document.createElement("canvas");
-  c.width = 6144;
-  c.height = 760;
-  const draw = () => {
-    const ctx = c.getContext("2d");
-    ctx.clearRect(0, 0, c.width, c.height);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "#ffffff";
-    try { ctx.letterSpacing = "24px"; } catch (e) {}
-    ctx.font = '400 520px "Anton", sans-serif';
-    ctx.fillText("BUILT TO WIN", c.width / 2, c.height / 2 + 22);
-  };
-  draw();
-  document.fonts.load('400 520px "Anton"').then(() => { draw(); tex.needsUpdate = true; }).catch(() => {});
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
-
-  // static, bright white, no ripple/refraction — the text sits still under
-  // the water with no distortion or motion, only its overall opacity fades
-  // with heroFade like the rest of the hero-only dressing
-  waterTextMat = new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    uniforms: {
-      uMap: { value: tex },
-      uOpacity: { value: 1 },
-    },
-    vertexShader: `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }`,
-    fragmentShader: `
-      uniform sampler2D uMap;
-      uniform float uOpacity;
-      varying vec2 vUv;
-      void main() {
-        vec4 c = texture2D(uMap, vUv);
-        gl_FragColor = vec4(vec3(1.0), c.a * uOpacity);
-      }`,
-  });
-  const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(19.5, 2.41), waterTextMat);
-  textPlane.rotation.x = -Math.PI / 2;
-  textPlane.rotation.z = Math.PI; // read correctly from the top-down camera
-  textPlane.position.set(0, -0.28, 0.25); // genuinely submerged
-  textPlane.renderOrder = 1; // drawn first; the water surface blends over it
-  scene.add(textPlane);
-}
+// added to carGroup once it exists, below — keeps the shadow glued under
+// the car through the mouse-parallax nudge instead of staying world-fixed
 
 /* ================= lights (no sign — top-view hero) ================= */
 
@@ -266,11 +209,11 @@ whiteKey.shadow.mapSize.set(isMobile ? 512 : 1024, isMobile ? 512 : 1024);
 whiteKey.shadow.bias = -0.0002;
 scene.add(whiteKey, whiteKey.target);
 
-/* amber accent beam */
-const amberSpot = new THREE.SpotLight(0xffa843, 110, 0, Math.PI / 7.2, 0.45, 2);
-amberSpot.position.set(0.45, 6.4, 0.5);
-amberSpot.target.position.set(0, 0.7, 0.4);
-scene.add(amberSpot, amberSpot.target);
+/* blue accent beam — matches the hero's dome/glow palette */
+const accentSpot = new THREE.SpotLight(0x5fa0ff, 110, 0, Math.PI / 7.2, 0.45, 2);
+accentSpot.position.set(0.45, 6.4, 0.5);
+accentSpot.target.position.set(0, 0.7, 0.4);
+scene.add(accentSpot, accentSpot.target);
 
 const beamMat = new THREE.ShaderMaterial({
   transparent: true,
@@ -279,7 +222,7 @@ const beamMat = new THREE.ShaderMaterial({
                      // water's depth silently clips it into a hard edge
   blending: THREE.AdditiveBlending,
   side: THREE.DoubleSide,
-  uniforms: { uColor: { value: new THREE.Color(0xff9a33) } },
+  uniforms: { uColor: { value: new THREE.Color(0x6fb0ff) } },
   vertexShader: `
     varying vec2 vUv;
     varying vec3 vNormalW, vViewW;
@@ -311,7 +254,7 @@ const frontFill = new THREE.DirectionalLight(0xe6edff, 0.5);
 frontFill.position.set(0, 3, 9);
 scene.add(frontFill);
 
-/* soft amber lamp glow at the beam's source — a sprite has no geometry
+/* soft blue lamp glow at the beam's source — a sprite has no geometry
    edges, so the overhead light never cuts off at any camera angle */
 const lampCanvas = document.createElement("canvas");
 lampCanvas.width = lampCanvas.height = 256;
@@ -321,10 +264,10 @@ lampCanvas.width = lampCanvas.height = 256;
   // already black well before it reaches the sprite's own edge —
   // it can never be visibly "cut off" by anything, frame included
   const g = ctx.createRadialGradient(128, 128, 4, 128, 128, 128);
-  g.addColorStop(0, "rgba(255, 176, 80, 0.8)");
-  g.addColorStop(0.25, "rgba(255, 150, 55, 0.18)");
-  g.addColorStop(0.55, "rgba(255, 140, 40, 0)");
-  g.addColorStop(1, "rgba(255, 140, 40, 0)");
+  g.addColorStop(0, "rgba(140, 185, 255, 0.8)");
+  g.addColorStop(0.25, "rgba(110, 160, 250, 0.18)");
+  g.addColorStop(0.55, "rgba(100, 150, 245, 0)");
+  g.addColorStop(1, "rgba(100, 150, 245, 0)");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 256, 256);
 }
@@ -337,20 +280,11 @@ const lampGlow = new THREE.Sprite(
     blending: THREE.AdditiveBlending,
   })
 );
-// lowered to sit near the actual light source (amberSpot is at y=6.4)
+// lowered to sit near the actual light source (accentSpot is at y=6.4)
 // instead of floating high enough to graze the top of the viewport
 lampGlow.position.set(0.45, 6.7, 0.45);
 lampGlow.scale.set(6, 3.6, 1);
 scene.add(lampGlow);
-
-/* roaming searchlight — a real light source whose pool of light
-   travels along the car's bodywork */
-const roamLight = new THREE.SpotLight(0xffffff, 0, 0, Math.PI / 5.5, 0.98, 2);
-roamLight.position.set(0, 8.5, 0);
-roamLight.castShadow = true;
-roamLight.shadow.mapSize.set(isMobile ? 512 : 1024, isMobile ? 512 : 1024);
-roamLight.shadow.bias = -0.0002;
-scene.add(roamLight, roamLight.target);
 
 const hemi = new THREE.HemisphereLight(0x0e1428, 0x020204, 0.25);
 scene.add(hemi);
@@ -361,38 +295,110 @@ rearAccent.position.set(5.5, 3.4, -5.6);
 rearAccent.target.position.set(0, 0.7, -2.2);
 scene.add(rearAccent, rearAccent.target);
 
-/* soft light pool that travels on the water with the searchlight —
-   the Water shader can't see lights, so this is its visible footprint */
-const poolCanvas = document.createElement("canvas");
-poolCanvas.width = poolCanvas.height = 256;
-{
-  const ctx = poolCanvas.getContext("2d");
-  const g = ctx.createRadialGradient(128, 128, 4, 128, 128, 128);
-  g.addColorStop(0, "rgba(235, 240, 255, 0.26)");
-  g.addColorStop(0.5, "rgba(210, 220, 250, 0.10)");
-  g.addColorStop(1, "rgba(200, 210, 245, 0)");
+/* ================= hero-only: elevated dramatic look =================
+   New wide-angle hero composition (from hero-lab prototyping): a real
+   enveloping dome (not a flat glow plane — that showed a hard silhouette
+   edge against the black background) plus drifting dust, both hero-
+   exclusive — driven by heroFade exactly like the removed searchlight and
+   underwater text used to be, so they fade out identically once you
+   scroll into the front-wing section. Nothing else in the scene is touched. */
+
+const heroDomeMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide,
+  transparent: true,
+  depthWrite: false,
+  uniforms: {
+    uOpacity: { value: 0 },
+    uGlowDir: { value: new THREE.Vector3(-0.5, 0.33, -0.8).normalize() },
+  },
+  vertexShader: `
+    varying vec3 vWorldDir;
+    void main() {
+      vWorldDir = normalize(position);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`,
+  fragmentShader: `
+    varying vec3 vWorldDir;
+    uniform vec3 uGlowDir;
+    uniform float uOpacity;
+    void main() {
+      float up = clamp(vWorldDir.y * 0.5 + 0.5, 0.0, 1.0);
+      vec3 top = vec3(0.09, 0.20, 0.38);
+      vec3 mid = vec3(0.035, 0.085, 0.17);
+      vec3 bottom = vec3(0.001, 0.006, 0.018);
+      vec3 base = mix(bottom, mid, smoothstep(0.0, 0.55, up));
+      base = mix(base, top, smoothstep(0.55, 1.0, up));
+      float glow = pow(max(dot(vWorldDir, uGlowDir), 0.0), 3.2);
+      vec3 col = base + vec3(0.55, 0.72, 1.0) * glow * 0.9;
+      gl_FragColor = vec4(col, uOpacity);
+    }`,
+});
+const heroDome = new THREE.Mesh(new THREE.SphereGeometry(60, 32, 24), heroDomeMat);
+scene.add(heroDome);
+
+const heroRim = new THREE.DirectionalLight(0x4f8dff, 0);
+heroRim.position.set(-5, 3.5, -6.5);
+scene.add(heroRim);
+
+function buildDustTexture() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const ctx = c.getContext("2d");
+  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, "rgba(255,255,255,0.9)");
+  g.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 256, 256);
+  ctx.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
 }
-const lightPool = new THREE.Mesh(
-  new THREE.PlaneGeometry(9, 9),
-  new THREE.MeshBasicMaterial({
-    map: new THREE.CanvasTexture(poolCanvas),
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  })
-);
-lightPool.rotation.x = -Math.PI / 2;
-lightPool.position.y = 0.02;
-lightPool.renderOrder = 6;
-scene.add(lightPool);
+
+const DUST_COUNT = 650;
+const dustGeo = new THREE.BufferGeometry();
+const dustPos = new Float32Array(DUST_COUNT * 3);
+const dustSeed = new Float32Array(DUST_COUNT);
+for (let i = 0; i < DUST_COUNT; i++) {
+  const r = Math.sqrt(Math.random()) * 6.5;
+  const a = Math.random() * Math.PI * 2;
+  dustPos[i * 3 + 0] = Math.cos(a) * r;
+  dustPos[i * 3 + 1] = 0.3 + Math.random() * 8.5;
+  dustPos[i * 3 + 2] = Math.sin(a) * r - 1.2;
+  dustSeed[i] = Math.random();
+}
+dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
+const dustMat = new THREE.PointsMaterial({
+  size: 0.05,
+  map: buildDustTexture(),
+  transparent: true,
+  opacity: 0,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+  color: new THREE.Color(0xcfe3ff),
+});
+const dust = new THREE.Points(dustGeo, dustMat);
+scene.add(dust);
+const dustPosAttr = dustGeo.getAttribute("position");
+
+function updateDust(t, dt, fade) {
+  dust.visible = fade > 0.01;
+  if (!dust.visible) return;
+  dustMat.opacity = 0.45 * fade;
+  for (let i = 0; i < DUST_COUNT; i++) {
+    const seed = dustSeed[i];
+    let y = dustPosAttr.getY(i) - (0.05 + seed * 0.08) * dt;
+    if (y < 1.0) y = 7.3 + seed * 0.5;
+    const drift = Math.sin(t * 0.4 + seed * 40.0) * 0.15 * dt;
+    dustPosAttr.setY(i, y);
+    dustPosAttr.setX(i, dustPosAttr.getX(i) + drift);
+  }
+  dustPosAttr.needsUpdate = true;
+}
 
 /* ================= model ================= */
 
 const CAR_LENGTH = 5.63; // RB19
 const carGroup = new THREE.Group();
 scene.add(carGroup);
+carGroup.add(contactShadow);
 
 const explodeParts = [];
 const calloutTargets = {};
@@ -602,7 +608,7 @@ const gradePass = new ShaderPass({
                   + texture2D(tDiffuse, vUv + vec2(0.0,  uTexel.y)).rgb
                   + texture2D(tDiffuse, vUv + vec2(0.0, -uTexel.y)).rgb ) * 0.25;
       c.rgb = clamp(c.rgb + (c.rgb - blur) * 0.6, 0.0, 64.0);
-      c.rgb *= vec3(1.02, 1.0, 0.98);
+      c.rgb *= vec3(0.98, 1.0, 1.03);
       c.rgb = mix(c.rgb, c.rgb * vec3(0.96, 0.98, 1.06), 0.25 * (1.0 - smoothstep(0.0, 0.5, c.r)));
       float d = distance(vUv, vec2(0.5, 0.46));
       c.rgb *= smoothstep(0.95, 0.35, d) * 0.35 + 0.65;
@@ -619,7 +625,7 @@ composer.addPass(new OutputPass());
 /* look.x offsets push the car sideways on screen so the text
    panels always fall into black space (panel left => car right) */
 const beats = [
-  { el: "#hero",           pos: [0, 11.6, -1.15],   look: [0, 0, 0.6] }, // top view
+  { el: "#hero",           pos: [3.8, 5.9, 7.4],    look: [0, 0.55, -0.1] }, // elevated 3/4, dramatic look-down
   { el: "#shot-frontwing", pos: [1.5, 3.5, 5.9],    look: [-0.8511347302152529, 0.20330249601741043, 1.997890180630147] },  // high front view, car right
   { el: "#shot-cockpit",   pos: [2.6, 3.2, 0.6],    look: [-1.25, 0.25, 0.2] }, // car raised (as asked); x untouched
   { el: "#shot-rearwing",  pos: [-1.9, 2.4, -5.3],  look: [-1.35, 1.0, -2.2] }, // car left, text right
@@ -731,13 +737,23 @@ function curveT(p) {
   return 1;
 }
 
-const camPos = new THREE.Vector3(0, 9.2, -1.6);
-const camLook = new THREE.Vector3(0, 0, 0.4);
+const camPos = new THREE.Vector3(3.8, 5.9, 7.4);
+const camLook = new THREE.Vector3(0, 0.55, -0.1);
 const targetPos = new THREE.Vector3();
 const targetLook = new THREE.Vector3();
 let heroFade = 1;
-let lastShadowBucket = -1;
 let introRadiusBoost = 1;
+
+/* ================= mouse parallax — subtle, car-only =================
+   Hover the cursor anywhere and the car nudges slightly toward it, like
+   it's reacting to your attention. Damped, so it never snaps; tiny
+   magnitudes, so it reads as alive rather than as an obvious effect. */
+let mouseX = 0, mouseY = 0; // raw target, normalized -1..1
+let parallaxX = 0, parallaxY = 0; // damped
+window.addEventListener("pointermove", (e) => {
+  mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+  mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+});
 
 function updateCamera(t, dt) {
   const p = Math.min(Math.max(window.scrollY / cachedDocH, 0), 1);
@@ -760,40 +776,26 @@ function updateCamera(t, dt) {
   camera.position.copy(camPos);
   camera.lookAt(camLook);
 
+  // mouse parallax — same damped-chase feel as the camera, just much smaller
+  const pk = 1 - Math.exp(-dt * 4);
+  parallaxX += (mouseX - parallaxX) * pk;
+  parallaxY += (mouseY - parallaxY) * pk;
+  carGroup.position.x = parallaxX * 0.15;
+  carGroup.position.z = -parallaxY * 0.1;
+  carGroup.rotation.y = parallaxX * 0.02;
+
   heroFade = Math.max(0, 1 - p * 14);
-  // hero stays pure black-and-white — amber belongs to the later beats
-  amberSpot.intensity = 110 * (1 - heroFade);
+  // hero stays pure black-and-white — the accent light belongs to the later beats
+  accentSpot.intensity = 110 * (1 - heroFade);
   beam.visible = heroFade < 0.4;
   lampGlow.material.opacity = 1 - heroFade;
   lampGlow.visible = heroFade < 0.9;
 
-  // roaming searchlight — hero only; the instant you leave the first
-  // screen ALL hero motion stops dead
-  if (heroFade > 0.01) {
-    roamLight.intensity = 430 * heroFade;
-    roamLight.position.x = Math.cos(t * 0.13) * 1.6;
-    roamLight.target.position.set(Math.sin(t * 0.17) * 0.7, 0.5, Math.sin(t * 0.22) * 2.3);
-    // the light sweeps slowly — a full 60fps shadow rebake is imperceptible
-    // overkill; ~30/sec still reads as smooth and halves the cost
-    const bucket = Math.floor(t * 30);
-    if (bucket !== lastShadowBucket) {
-      lastShadowBucket = bucket;
-      renderer.shadowMap.needsUpdate = true;
-    }
-  } else {
-    roamLight.intensity = 0;
-  }
-
-  // the light's visible footprint travels across the water with it
-  lightPool.position.x = roamLight.target.position.x * 1.4 + roamLight.position.x * 0.4;
-  lightPool.position.z = roamLight.target.position.z * 1.4;
-  lightPool.material.opacity = heroFade * waterTune.pool;
-  lightPool.visible = heroFade > 0.01;
-
-  // underwater headline: static, only its opacity follows the hero fade
-  if (waterTextMat) {
-    waterTextMat.uniforms.uOpacity.value = heroFade;
-  }
+  // new elevated-angle hero dressing — same hero-only fade as everything else
+  heroDomeMat.uniforms.uOpacity.value = heroFade;
+  heroDome.visible = heroFade > 0.01;
+  heroRim.intensity = 1.4 * heroFade;
+  updateDust(t, dt, heroFade);
 
   // beat-specific dressing: floor/diffuser shot gets a right-side accent
   // and calmer water so the reflection doesn't fight the car
@@ -877,46 +879,6 @@ document.querySelectorAll(".callout").forEach((el) => (calloutEls[el.dataset.par
 const projV = new THREE.Vector3();
 let explode = 0;
 
-/* hero top-view spec callouts — anchored to real points on the car */
-const heroAnchors = {
-  halo:     new THREE.Vector3(-0.1, 0.95, 0.1),
-  rearwing: new THREE.Vector3(0.2, 1.0, -2.45),
-  tyre:     new THREE.Vector3(-0.85, 0.36, 1.75),
-  floor:    new THREE.Vector3(0.95, 0.2, -0.7),
-  engine:   new THREE.Vector3(-0.35, 0.75, -1.3),
-};
-const heroCalloutEls = {};
-document.querySelectorAll(".hero-callout").forEach((el) => (heroCalloutEls[el.dataset.anchor] = el));
-
-let heroCalloutsWereVisible = true;
-function updateHeroCallouts() {
-  const o = Math.max(0, Math.min(1, heroFade * 1.4 - 0.2));
-  // once hidden, skip the whole loop every frame instead of repeatedly
-  // re-writing opacity:0 on elements that are already invisible — this is
-  // the common case for ~90% of the scroll range, and permanent after it
-  if (o <= 0.01) {
-    if (heroCalloutsWereVisible) {
-      for (const el of Object.values(heroCalloutEls)) el.style.opacity = 0;
-      heroCalloutsWereVisible = false;
-    }
-    return;
-  }
-  heroCalloutsWereVisible = true;
-  for (const [key, el] of Object.entries(heroCalloutEls)) {
-    const anchor = heroAnchors[key];
-    projV.copy(anchor);
-    carGroup.localToWorld(projV); // anchors follow the hero sway
-    projV.project(camera);
-    if (projV.z > 1) { el.style.opacity = 0; continue; }
-    const flip = anchor.x > 0; // top-down camera mirrors x
-
-    el.classList.toggle("flip", flip);
-    const x = ((projV.x + 1) / 2) * window.innerWidth - (flip ? el.offsetWidth : 0);
-    el.style.opacity = o;
-    el.style.transform = `translate(${x}px, ${((1 - projV.y) / 2) * window.innerHeight}px)`;
-  }
-}
-
 let prevExplode = -1;
 function updateExplode(p) {
   // explode peaks through the anatomy section
@@ -975,7 +937,6 @@ renderer.setAnimationLoop(() => {
   const p = updateCamera(t, dt);
   updateExplode(p);
   updateCallouts();
-  updateHeroCallouts();
   updateScrubber(p);
   composer.render();
 });
@@ -1174,6 +1135,9 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
     "#exploded .merch-block": [-601.98828125, -234.84765625],
     "#stats .merch-block": [-934.203125, 155.09375],
     "#closer .merch-block": [292.51171875, 70.05859375],
+    "#stats .section-text": [212.57421875, -156.1875],
+    "#closer .section-text": [233.9140625, -186.28125],
+    "#music-toggle": [-329.53125, 23.6796875],
   };
   const DEFAULT_PANEL_SIZES = {
     "#shot-frontwing .merch-block": [300, 300],
@@ -1255,7 +1219,6 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
       <label>water sheen (edges) <input id="t-sheen" type="range" min="0" max="4" step="0.05"></label>
       <label>waviness <input id="t-dist" type="range" min="0" max="8" step="0.1"></label>
       <label>surface opacity <input id="t-alpha" type="range" min="0.5" max="1" step="0.01"></label>
-      <label>light pool <input id="t-pool" type="range" min="0" max="1.5" step="0.05"></label>
       <div class="row"><button id="t-export">EXPORT</button><button id="t-reset">RESET</button></div>
       <div class="hint">drag scene = move car in frame<br>shift+drag = move camera<br>drag text = reposition it</div>
     </div>`;
@@ -1268,7 +1231,6 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
     "t-sheen": ["sheen", (v) => ceiling.material.color.setScalar(v)],
     "t-dist": ["distortion", () => {}],
     "t-alpha": ["alpha", (v) => (water.material.uniforms.alpha.value = v)],
-    "t-pool": ["pool", () => {}],
   };
   for (const [id, [key, apply]] of Object.entries(sliders)) {
     const el = ui.querySelector("#" + id);
