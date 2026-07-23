@@ -533,22 +533,29 @@ footer {
   .panel.left { margin-left: 9vw; }
   .panel.right { margin-right: 9vw; }
   .panel { width: min(420px, 88vw); }
-  .panel h2, .exploded-head h2 { font-size: clamp(2rem, 8vw, 4rem); }
+  .panel h2, .exploded-head h2 { font-size: clamp(1.8rem, 7vw, 2.4rem); }
+  .panel p { font-size: 0.92rem; }
 
-  .hero-tag { font-size: 1rem; line-height: 1.5; max-width: 26ch; }
+  .hero-tag { font-size: 0.95rem; line-height: 1.5; max-width: 26ch; }
   .hero-sub, .scroll-cue { bottom: max(28px, env(safe-area-inset-bottom, 0px)); }
 
   .stat-row { gap: clamp(18px, 8vw, 40px); }
-  .stats-foot { max-width: 32ch; font-size: 0.9rem; }
+  .stat-n { font-size: clamp(2.2rem, 8vw, 3.4rem); }
+  .stats-foot { max-width: 32ch; font-size: 0.88rem; }
 
-  /* .giant-2's clamp() floor (4rem = 64px) never actually shrinks below
-     that on any phone width — every other big heading in this file got a
-     mobile override, this one was missed. At 64px "CHAMPION" runs close to
-     the full viewport width and collides with the fixed scrubber/music
-     button when scrolled into view. */
+  /* every big display heading gets a real mobile ceiling here, not just a
+     vw-scaled floor — a clamp() whose max is still desktop-sized (4rem+)
+     doesn't actually shrink on narrower phones once vw catches up to it */
   #closer { padding: 0 6vw; }
-  .giant-2 { font-size: clamp(2rem, 9vw, 2.6rem); }
-  .closer-sub { font-size: 0.56rem; letter-spacing: 0.08em; line-height: 1.6; }
+  .giant-2 { font-size: clamp(1.6rem, 7vw, 2.1rem); }
+  .closer-sub { font-size: 0.52rem; letter-spacing: 0.06em; line-height: 1.6; }
+
+  /* merch thumbnails were capped at 300px unconditionally (same value as
+     desktop) — noticeably large relative to a ~350-390px phone panel;
+     shrink the whole block down for mobile specifically */
+  .merch-block { max-width: 240px; }
+  .merch-heading { font-size: 0.66rem; }
+  .merch-tagline { font-size: 0.8rem; }
 
   footer { padding: 28px 24px; }
   footer .mono { letter-spacing: 0.1em; line-height: 1.6; }
@@ -561,9 +568,10 @@ footer {
   /* small phones (SE-class widths) need one more notch down: the 640px
      tier's floors were still sized with a bit of desktop-adjacent margin */
   .hero-tag { font-size: 0.92rem; max-width: 24ch; }
-  .panel h2, .exploded-head h2 { font-size: clamp(1.75rem, 9vw, 4rem); }
-  .giant-2 { font-size: clamp(1.7rem, 10vw, 2.2rem); }
+  .panel h2, .exploded-head h2 { font-size: clamp(1.5rem, 8vw, 2rem); }
+  .giant-2 { font-size: clamp(1.4rem, 8vw, 1.8rem); }
   .panel.left { margin-left: 6vw; }
   .panel.right { margin-right: 6vw; }
-  .stat-n { font-size: clamp(2rem, 9vw, 4.6rem); }
+  .stat-n { font-size: clamp(1.8rem, 8vw, 2.8rem); }
+  .merch-block { max-width: 210px; }
 }
