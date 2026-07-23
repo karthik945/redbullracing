@@ -1166,7 +1166,7 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
   // .merch-block, separate from the main story text — draggable AND
   // resizable (see the ResizeObserver setup below), independent per section
   const panelKeys = [
-    ".hero-sub", "#music-toggle",
+    ".hero-sub",
     "#nav-home", "#nav-merch-wrap", "#nav-cart",
     "#shot-frontwing .panel-inner", "#shot-cockpit .panel-inner", "#shot-rearwing .panel-inner", "#shot-diffuser .panel-inner",
     "#shot-frontwing .merch-block", "#shot-cockpit .merch-block", "#shot-rearwing .merch-block", "#shot-diffuser .merch-block",
@@ -1187,7 +1187,10 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
     "#closer .merch-block": [292.51171875, 70.05859375],
     "#stats .section-text": [212.57421875, -156.1875],
     "#closer .section-text": [233.9140625, -186.28125],
-    "#music-toggle": [-329.53125, 23.6796875],
+    // #music-toggle intentionally has no entry here — its position is now
+    // fixed directly in CSS (see style.css); a baked-in pixel drag offset
+    // on top of a vw-relative base was exactly why it drifted per window
+    // width. It's still draggable in tuning mode via panelKeys below.
   };
   const DEFAULT_PANEL_SIZES = {
     "#shot-frontwing .merch-block": [300, 300],
@@ -1199,6 +1202,13 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
     "#closer .merch-block": [300, 205],
   };
   const panelOffsets = { ...DEFAULT_PANEL_OFFSETS, ...saved.panels };
+  // #music-toggle is no longer part of the drag-offset system (see the note
+  // above DEFAULT_PANEL_OFFSETS) — but an OLD tuning session may still have
+  // a stale offset for it sitting in this browser's localStorage from
+  // before that change, which `...saved.panels` would silently resurrect
+  // and reapply on every load. Strip it unconditionally so a stale cached
+  // value can never reapply again, without requiring a manual tuner RESET.
+  delete panelOffsets["#music-toggle"];
   const panelSizes = { ...DEFAULT_PANEL_SIZES, ...(saved.sizes || {}) };
   // CSS `translate` is separate from `transform`, so GSAP reveals
   // (which write transform) can never wipe a dragged position
@@ -1211,10 +1221,19 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
       if (el) setOffset(el, off);
     }
   };
-  applyPanelOffsets();
-  for (const [k, size] of Object.entries(panelSizes)) {
-    const el = document.querySelector(k);
-    if (el) { el.style.width = size[0] + "px"; el.style.height = size[1] + "px"; }
+  // every offset/size here was hand-dragged on a wide desktop viewport —
+  // applying a several-hundred-pixel nudge meant for a 1400px+ screen to a
+  // 380px phone is exactly what was pushing text/images off-screen and
+  // making the whole page wider than the viewport (horizontal scroll,
+  // dragging the fixed 3D canvas along with it). Below the mobile
+  // breakpoint, skip both entirely and let the existing responsive CSS
+  // (which already stacks these sections sensibly on its own) do the work.
+  if (!isMobile) {
+    applyPanelOffsets();
+    for (const [k, size] of Object.entries(panelSizes)) {
+      const el = document.querySelector(k);
+      if (el) { el.style.width = size[0] + "px"; el.style.height = size[1] + "px"; }
+    }
   }
   // merch-blocks get a native resize handle in tuning mode (CSS `resize`) —
   // ResizeObserver is the only reliable cross-browser way to detect that
@@ -1255,7 +1274,7 @@ document.getElementById("footer-cart")?.addEventListener("click", (e) => e.preve
         padding: 6px 0; font-family: inherit; font-size: 9px; letter-spacing: .1em; cursor: pointer; }
       #tuner-panel .hint { margin-top: 8px; line-height: 1.5; opacity: .7; }
       #tuner-panel .beat { color: #ffc906; }
-      body.tuning .panel-inner, body.tuning .hero-sub, body.tuning .merch-block, body.tuning .section-text, body.tuning #nav-home, body.tuning #nav-merch-wrap, body.tuning #nav-cart, body.tuning #music-toggle { outline: 1px dashed rgba(255,201,6,.5); cursor: grab; }
+      body.tuning .panel-inner, body.tuning .hero-sub, body.tuning .merch-block, body.tuning .section-text, body.tuning #nav-home, body.tuning #nav-merch-wrap, body.tuning #nav-cart { outline: 1px dashed rgba(255,201,6,.5); cursor: grab; }
       /* native browser resize handle — the only reliable cross-browser way
          to let the merch teaser box be resized without hand-rolled corner-
          drag math; ResizeObserver (set up in JS) persists + exports it */
