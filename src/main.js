@@ -777,6 +777,13 @@ function updateCamera(t, dt) {
   posCurve.getPoint(ct, targetPos);
   lookCurve.getPoint(ct, targetLook);
 
+  // on mobile, fovForAspect() widens the vertical FOV a lot to hold the
+  // horizontal framing constant on a narrow screen — with the same look-at
+  // target as desktop, that leaves the car sitting dead-center with much
+  // less room below it for the story text. Aiming slightly lower pushes
+  // the car up in frame across every beat, freeing up space underneath.
+  if (isMobile) targetLook.y -= 0.32;
+
   heroFade = Math.max(0, 1 - p * 14);
 
   // idle sway, strongest at the hero, gone once the flight starts
