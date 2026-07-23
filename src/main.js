@@ -1040,7 +1040,7 @@ const HERO_FACTS = [
   { kicker: "ORACLE RED BULL RACING", tag: "Founded in 2005. Six-time Formula 1<br/>Constructors' Champions by the end of 2023." },
   { kicker: "RB19 · CHASSIS", tag: "Designed under technical director<br/>Adrian Newey for the 2023 season." },
 ];
-const HERO_FACT_INTERVAL_MS = 4 * 60 * 1000; // "every few minutes"
+const HERO_FACT_INTERVAL_MS = 12 * 1000;
 
 {
   const heroSubEl = document.querySelector(".hero-sub");
